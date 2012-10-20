@@ -6,12 +6,16 @@ tagline: Supporting tagline
 {% include JB/setup %}
 
 {% for post in site.posts %}
-# {{ post.title }}
-----
 
-{{ post.content | strip_html | truncatewords: 55 }}
+<div style="border-style:solid; border-color:#EEE; padding:5px;">
+<h1>{{ post.title }}</h1> -- {{ post.date | date_to_string }}
+<hr/>
 
-[Read more...]({{ post.url }})
+{{ post.content }}
+
+</div>
+<br/>
+<br/>
 
 {% endfor %}
 
