@@ -8,7 +8,7 @@ tagline: Supporting tagline
 {% for post in site.posts %}
 
 <div style="border-style:solid; border-color:#EEE; padding:5px;">
-<h1>{{ post.title }}</h1> -- {{ post.date | date_to_string }}
+<h1>{{ post.title }}</h1> <em>posted on {{ post.date | date_to_string }}</em>
 <hr/>
 
 {{ post.content }}
