@@ -66,6 +66,35 @@ jekyll实际上是由github开发出来的用于在github上面放置静态页�
 有了上面的步骤，接着你就是修改一下repo里面的index.md，
 还有创建博客的时候按照上面描述的顺序去创建就可以了。
 
+## 代码语法高亮
+----
+
+在jekyll的文档里面，说到代码的语法高亮是通过[pygment](http://pygments.org/)来实现的。
+按照文档上面说，用下面的格式就可以实现语法高亮了：
+
+    {% raw %}
+    {% highlight ruby linenos %}
+    def foo
+        puts 'foo'
+    end
+	{% endhighlight %}
+	{% endraw %}
+
+但是如果不小心的话，jekyll是只会将代码块区分开来，但是并没有将其语法高亮。
+后来仔细看文档，发现了下面的话：
+
+> In order for the highlighting to show up, you’ll need to include a highlighting stylesheet. For an example stylesheet you can look at [syntax.css](http://github.com/mojombo/tpw/tree/master/css/syntax.css). These are the same styles as used by GitHub and you are free to use them for your own site.
+
+所以关键的就是把上面提到的那个syntax.css文件加到默认的css加载里面去。
+由于我默认用的是twitter主题，所以就做如下的改动：
+
+1. 将syntax.css放到assert/themes/twitter/css/里面去。
+1. 在_include/themes/twitter/default.html里面的head节点里面把上面的syntax.css给加载上去。
+
+用了上面的方法，就可以实现和Github一样的语法高亮了。
+
+
+
 至于主题这个事，我现在还在慢慢的研究，暂时还是用回默认的twitter主题。
 
 以后有什么补充的话，我会继续在这个文章里面进行补充。
