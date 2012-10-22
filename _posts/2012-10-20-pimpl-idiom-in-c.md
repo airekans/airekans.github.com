@@ -191,3 +191,125 @@ auto\_ptr的析构函数就被编译器特化了。
 而在A这个例子里面，模板参数就是Pimpl。而在特化的这一瞬间，Pimpl是被声明了，
 但是还没有被定义。
 
+所以例子里面的A在经过编译后是和下面的代码等价的：
+
+{% highlight cpp linenos %}
+class A
+{
+public:
+    A();
+	~A()
+	{
+		~auto_ptr<Pimpl>(m_pimpl);
+	}
+
+private:
+    struct Pimpl;
+    std::auto_ptr<Pimpl> m_pimpl;
+};
+
+auto_ptr<Pimpl>::~auto_ptr()
+{
+	delete m_ptr; // m_ptr的类型是Pimpl*
+}{% endhighlight %}
+
+那为什么当我加上A的析构函数的声明之后，编译就可以通过呢？因为当我们声明了A的析构函数之后，
+编译器就不会自动生成析构函数的实现了，而由于我们会在cpp文件里面去写析构函数的实现，
+而在此之前，我们就会在cpp文件的开头定义好Pimpl的实现。所以当我们自己写的A的析构函数
+被编译器看见的时候，Pimpl就是一个已经定义好的类型，所以就没有问题了。
+
+# Pimpl by boost::shared\_ptr
+----
+
+其实使用auto\_ptr来实现Pimpl Idiom并不是唯一的方法，Pimpl还可以用
+boost::scoped\_ptr和boost::shared\_ptr来实现。而scoped\_ptr和auto\_ptr
+其实是一样的，也是需要用户手工的声明一个析构函数来实现Pimpl Idiom，这里就不说了。
+
+但是通过shared\_ptr来实现的话，我们就连析构函数都可以省略！也就是说，
+如果我写下面的代码，是完全正确的：
+
+{% highlight cpp linenos %}
+class A
+{
+public:
+    A();
+
+private:
+    struct Pimpl;
+    boost::shared_ptr<Pimpl> m_pimpl;
+};{% endhighlight %}
+
+需要注意的是，虽然析构函数可以省略，但是构造函数还是必须明确声明的。
+这又是为什么呢？为什么auto\_ptr不行，但是shared\_ptr就可以呢？
+
+答案就在shared\_ptr的实现里面。
+
+相信shared\_ptr应该是每个较为深入学过C++的人都会理解原理的一个类了，其中shared\_ptr
+的实现又可以分为侵入式和非侵入式的，而boost::shared\_ptr的实现是非侵入式的。
+也就是说要用shared\_ptr的类不需要任何改动就可以使用了。
+
+来看看简化之后的shared\_ptr的实现吧：
+
+{% highlight cpp linenos %}
+
+class sp_counted_base
+{
+public:
+    virtual ~sp_counted_base(){}
+};
+
+template<typename T>
+class sp_counted_base_impl : public sp_counted_base
+{
+public:
+    sp_counted_base_impl(T *t):t_(t){}
+    ~sp_counted_base_impl(){delete t_;}
+private:
+    T *t_;
+};
+
+
+class shared_count
+{
+public:
+    static int count_;
+    template<typename T>
+    shared_count(T *t):
+        t_(new sp_counted_base_impl<T>(t))
+    {
+        count_ ++;
+    }
+    void release()
+    {
+        --count_;
+        if(0 == count_) delete t_;
+    }
+    ~shared_count()
+    {
+        release();
+    }
+private:
+    sp_counted_base *t_;
+};
+int shared_count::count_(0);
+
+template<typename T>
+class myautoptr
+{
+public:
+    template<typename Y>
+    myautoptr(Y* y):sc_(y),t_(y){}
+    ~myautoptr(){ sc_.release();}
+private:
+    shared_count sc_;
+    T *t_;
+};
+
+int main()
+{
+    myautoptr<A> a(new B);
+}{% endhighlight %}
+
+
+
+
