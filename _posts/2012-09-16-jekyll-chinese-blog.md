@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "利用jekyll搭建中文博客"
-description: ""
+description: "how to setup a blog by jekyll"
 category: jekyll
 tags: [jekyll]
 ---

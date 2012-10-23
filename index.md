@@ -1,7 +1,7 @@
 ---
 layout: page
 title: Life About Programming
-tagline: Supporting tagline
+tagline: printf("Hello, Programs!\n");
 ---
 {% include JB/setup %}
 

@@ -2,8 +2,8 @@
 layout: post
 title: "Pimpl Idiom in C++"
 description: ""
-category: 
-tags: [C++, design pattern]
+category: cpp
+tags: [cpp, design pattern]
 ---
 {% include JB/setup %}
 
@@ -310,6 +310,45 @@ int main()
     myautoptr<A> a(new B);
 }{% endhighlight %}
 
+从上面的代码可以看到，shared\_ptr里面不单存了一个模板类型的指针，
+还存了一个shared\_count。
+这个shared\_count的作用就是用来作为引用计数还有自动管理指针用的。
+而shared\_count里面又存了一个sp\_counted\_base，而sp\_counted\_base\_impl
+是一个模板类，其继承于sp\_counted\_base。这其实是一个模板技巧，也就是声明一个
+通用的基类，然后定义一个模板类来继承于这个基类，而其他类通过基类的指针来使用这个模板类，
+这样就可以在编译时确定一些类型信息，而同时把一些通用的实现细节推迟到运行时。这句话什么意思呢？
+看完接下来的解释你就明白了。
 
+接下来我们又要注意到，shared\_ptr和shared\_count的构造函数都是模板成员函数，
+模板类型由参数决定，而这个技巧和上面的模板继承技巧组合在一起，就是这节开始的时候，
+例子中不用写析构函数的理由。
 
+首先，当我们声明一个`shared_ptr<int>`的时候，它只是把里面的t\_成员给特化了，
+而shared\_count里面存的是什么类型的指针仍然没有确定。
 
+而当我们调用`shared_ptr<int>(new int(3))`的时候，他就调用了shared\_ptr的构造函数。
+这个时候就特化了模板构造函数，然后这个构造函数里面又调用了shared\_count的构造函数，
+所以shared\_count的构造函数也被特化，而又同时特化了sp\_counted\_base\_impl，
+这个时候里面的指针就完全被特化了。
+
+而我们看到，在shared\_ptr被析构的时候，它调用的是shared\_count的release函数，
+release函数里面又delete了它的类型为sp\_counted\_base的指针，
+所以调用的是sp\_counted\_base的析构函数(虚函数)。因为是虚函数，当具体类型确定之后，
+是会具体调用到具体的析构函数的。但是在编译的时候，不需要知道具体的类型。
+
+说了那么多，其实就是一句话，调用shared\_ptr的析构函数的时候，它不需要知道具体的指针类型。
+也就是说这个类型即使incomplete也没有关系。而在调用shared\_ptr的构造函数的时候，
+shared\_ptr就是会知道这个类型的所有信息，从而使得delete的时候调用到具体的析构函数。
+
+所以对于shared\_ptr来说，构造函数需要知道所有的类型信息，而析构函数是不要知道类型信息的。
+回到例子里面，当我们不声明析构函数的时候，编译器为我们定义了一个默认的析构函数，
+这个时候shared\_ptr的析构函数就会被特化并定义，同时也调用sp\_counted\_base
+的析构函数也就被编译了。但是这个时候并不许要具体的类型信息，
+所以类型是incomplete也是可以的。当我们定义A的构造函数的时候，这个时候shared\_ptr
+的构造函数就被特化，从而shared\_count的构造函数被特化，而sp\_counted\_base\_impl
+也就是被特化了。这个时候shared\_ptr也就有了所有必要的类型信息，
+他的析构函数就可以正常的工作了。
+
+这就是为什么用shared\_ptr来实现Pimpl可以不用写析构函数的原因了，
+为了实现这个功能，shared\_ptr牺牲了一点点的空间来完成上面的概念，比普通的shared\_ptr
+多了一个`sizeof(sp_counted_base*)`的大小。
