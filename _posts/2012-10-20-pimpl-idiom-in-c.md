@@ -8,7 +8,6 @@ tags: [cpp, design pattern]
 {% include JB/setup %}
 
 # Introduction
-----
 
 在C++里面, 经常出现的情况就是头文件里面的类定义太庞大了，而这个类的成员变量涉及了很多
 其他文件里面的类，从而导致了其他引用这个类的文件也依赖于这些成员变量的定义。
@@ -48,7 +47,6 @@ private:
 成员变量的声明都放到cpp文件里面去，这样使用A的类就可以完全不用知道A类的成员变量了。
 
 # Pimpl Idiom
-----
 
 而Pimpl idiom就是这样的解决方案。所谓的Pimpl idiom，就是声明一个类中类，
 然后再声明一个成员变量，类型是这个类中类的指针。用上面的例子来说明一下会清楚一下，
@@ -219,7 +217,6 @@ auto_ptr<Pimpl>::~auto_ptr()
 被编译器看见的时候，Pimpl就是一个已经定义好的类型，所以就没有问题了。
 
 # Pimpl by boost::shared\_ptr
-----
 
 其实使用auto\_ptr来实现Pimpl Idiom并不是唯一的方法，Pimpl还可以用
 boost::scoped\_ptr和boost::shared\_ptr来实现。而scoped\_ptr和auto\_ptr
