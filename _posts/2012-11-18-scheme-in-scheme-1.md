@@ -12,7 +12,6 @@ tags: [scheme,PL]
 这对于我们理解我们常用的语言也有很大的帮助。
 
 # Scheme: A little bit history
-----
 
 Scheme语言是lisp语言的其中一个变种。Lisp语言可以说是计算机历史上第二长寿的语言了，
 第一是Fortran。Lisp语言早期主要是应用在人工智能方面，
@@ -40,7 +39,6 @@ Scheme作为Lisp最大的两个变种之一（另外一个是Common Lisp），�
 如果感兴趣的话，可以移步[维基百科](http://en.wikipedia.org/wiki/Scheme_programming_language)看详细的介绍。
 
 # 我们要实现的语言——Scheme的定义
-----
 
 讲了那么多，那么我们要实现的语言到底是怎么样的一个语言呢？
 
@@ -71,9 +69,19 @@ Scheme作为Lisp最大的两个变种之一（另外一个是Common Lisp），�
 
 1. Number，包括interger、floating point number。例如2，2.1。
 1. String，和C里面的string是一样的，如"hello"。
-1. Symbol，这个类型在Lisp里面比较常见，如abc。在scheme里面，
+1. Symbol，这个类型在Lisp里面比较常见，如abc。在Scheme里面，
 要得到abc这个symbol，就用(quote abc)表示。
 1. Boolean， 包括两个值，true和false。
+1. List，这个和Python里面的List是类似的，不过写法是`(1 2 a)`。
+并且Scheme里面的List不是数组，是单链表。而构造list的写法有几种：
+    1. `(quote (1 2 a))`。注意到空的list表示为`(quote ())`
+	1. `(cons 1 (cons 2 (cons a (quote ()))))`。注意到，
+	元素的添加是通过`cons`来构造的。`(cons a b)`表示构造一个2个元素的list，
+	其中第一个元素是a，余下的元素是b。
+	1. 元素的取出是两个操作：car和cdr。假设a的值是`(cons 1 2)`，
+	那么`(car a)`的值是1，`(cdr a)`的值是2。所以那上面的例子来说，
+	`(car (quote (1 2 a)))`的值是1，`(cdr (quote (1 2 a)))`的值是
+	`(quote (2 a))`。
 
 ## lambda
 
@@ -169,12 +177,12 @@ lexical scope的意思是，闭包里面的变量的取值是根据其定义的�
 
 {% highlight scheme linenos %}
 (if (= x 1)
-	(+ x 1)
-	x){% endhighlight %}
+    (+ x 1)
+    x){% endhighlight %}
 
 上面的语句和下面的C语句是等价的。
 
-{% highlight c linenos %}
+{% highlight c %}
 x == 1 ? x + 1 : x{% endhighlight %}
 
 
