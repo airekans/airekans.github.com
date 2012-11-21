@@ -134,6 +134,20 @@ Scheme里面的lambda定义语法如下：
 
 也就是函数实际上是一个值为lambda的变量。
 
+还有一点值得说明的是，在函数的定义里面可以有嵌套的定义，例如：
+
+{% highlight scheme linenos %}
+(define (fact-iter n)
+  (define (iter x result)
+    (if (= x 1)
+	result
+	(iter (- x 1) (* x result))))
+  (iter n 1)){% endhighlight %}
+
+上面例子中的iter函数就是定义在fact-iter里面的。他的scope就是在fact-iter里面。
+如果fact-iter外面有定义iter的话，那么外面的iter就会被里面的这个iter覆盖掉。
+注意到例子中的程序是用来“循环”计算factorial的。
+
 ## 闭包与Lexical scoping
 
 闭包的准确定义是包含了其环境的函数，但是但从这句话里面我们很难明白到底什么是闭包。
@@ -185,5 +199,51 @@ lexical scope的意思是，闭包里面的变量的取值是根据其定义的�
 {% highlight c %}
 x == 1 ? x + 1 : x{% endhighlight %}
 
+# Example
 
+OK，说了上面那么多，接下来我用上面的语法说明写一个例子程序，并说明预期的输出。
+接下来的几章，我们就会用这个例子程序来验证我们的解析器的正确性。
 
+{% highlight scheme linenos %}
+;;;; 测试递归
+(define (fact n)
+  (if (< n 2)
+      n
+      (* n (fact (- n 1)))))
+
+(fact 3)  ; 6
+(fact 4)  ; 24
+(fact 5)  ; 120
+
+;;;; 测试嵌套定义
+(define (fact-iter n)
+  (define (iter x result)
+    (if (= x 1)
+	result
+	(iter (- x 1) (* x result))))
+  (iter n 1))
+
+(fact-iter 3)
+(fact-iter 4)
+
+;;;; 测试闭包
+(define (get-number-closure n)
+  (lambda () n))
+
+(define get-1 (get-number-closure 1))
+(get-1) ; 1
+
+(define get-100 (get-number-closure 100))
+(get-100) ; 100{% endhighlight %}
+
+# 编程环境
+
+OK，有了前面的基础，我们就剩下编程的环境了。
+这里就以我自己用的环境为准。
+我自己使用的Scheme是[mit-Scheme](www.gnu.org/s/mit-scheme)，
+因为它是[《SICP》](mitpress.mit.edu/sicp/full-text/book/book.html)里面使用的
+教学版本。而mit-scheme和Emacs配合的也比较好，利用mit-scheme源码包里面的xscheme.el
+来替换掉Emacs自身的scheme-mode可以很高效的进行Scheme的编程。所以我用的环境就是
+mit-scheme + Emacs + xscheme.el。
+
+我会在下一节讲解释器的基本结构。
