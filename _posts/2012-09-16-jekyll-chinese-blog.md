@@ -24,8 +24,7 @@ SAE嘛，刚开始吸引我的地方是他是一个Paas，而且有许多PHP应�
 Github Pages其实引擎也都是用的jekyll，所以最终我就决定自己用jekyll来搭了。
 下面就开始进入主题，介绍一下我的这个博客是怎么搭建起来的。
 
-## [jekyll](https://github.com/mojombo/jekyll)是个啥东西？
-----
+# [jekyll](https://github.com/mojombo/jekyll)是个啥东西？
 
 jekyll实际上是由github开发出来的用于在github上面放置静态页面的一个页面生成工具。
 它不是像wordpress那样的一个博客web程序。它是一个从markdown文件生成静态的HTML的工具。
@@ -44,8 +43,7 @@ jekyll实际上是由github开发出来的用于在github上面放置静态页�
 有了上面的流程，写一个博客就很方便了，开着jekyll server，然后用你最喜欢的编辑器，
 写markdown，就是这么简单。
 
-## 搭建jekyll博客环境
-----
+# 搭建jekyll博客环境
 
 要搭建jekyll环境很简单，你只需要一个安装好ruby 1.9.3，然后执行下面的命令：
 
@@ -66,8 +64,7 @@ jekyll实际上是由github开发出来的用于在github上面放置静态页�
 有了上面的步骤，接着你就是修改一下repo里面的index.md，
 还有创建博客的时候按照上面描述的顺序去创建就可以了。
 
-## 代码语法高亮
-----
+# 代码语法高亮
 
 在jekyll的文档里面，说到代码的语法高亮是通过[pygment](http://pygments.org/)来实现的。
 按照文档上面说，用下面的格式就可以实现语法高亮了：
@@ -92,8 +89,7 @@ jekyll实际上是由github开发出来的用于在github上面放置静态页�
 用了上面的方法，就可以实现和Github一样的语法高亮了。
 对于默认的语法高亮设置，[这篇文章](http://www.stehem.net/2012/02/14/how-to-get-pygments-to-work-with-jekyll.html)也讲到如何设置，如果有什么问题也可以参考一下。
 
-## Building Github Pages
-----
+# Building Github Pages
 
 其实这个过程还是很简单的，就只需要将你本地的commit push到github，
 那么github马上会帮你自动的build。成功之后，你的邮箱就会收到一个
@@ -112,8 +108,7 @@ page build successful的邮件。
 的build出现问题了。然后看了一下trouble shooting，才知道原来我用了raw tag……
 总之，问题解决就是好事。
 
-## 主题
----
+# 主题
 
 至于主题这个事，我现在还在慢慢的研究，暂时还是用回默认的twitter主题。
 
