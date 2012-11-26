@@ -240,8 +240,8 @@ OK，说了上面那么多，接下来我用上面的语法说明写一个例子
 
 OK，有了前面的基础，我们就剩下编程的环境了。
 这里就以我自己用的环境为准。
-我自己使用的Scheme是[mit-Scheme](www.gnu.org/s/mit-scheme)，
-因为它是[《SICP》](mitpress.mit.edu/sicp/full-text/book/book.html)里面使用的
+我自己使用的Scheme是[mit-scheme](http://www.gnu.org/s/mit-scheme)，
+因为它是[《SICP》](http://mitpress.mit.edu/sicp/full-text/book/book.html)里面使用的
 教学版本。而mit-scheme和Emacs配合的也比较好，利用mit-scheme源码包里面的xscheme.el
 来替换掉Emacs自身的scheme-mode可以很高效的进行Scheme的编程。所以我用的环境就是
 mit-scheme + Emacs + xscheme.el。
