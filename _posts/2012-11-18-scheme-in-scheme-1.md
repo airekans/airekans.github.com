@@ -83,6 +83,8 @@ Scheme作为Lisp最大的两个变种之一（另外一个是Common Lisp），�
 	`(car (quote (1 2 a)))`的值是1，`(cdr (quote (1 2 a)))`的值是
 	`(quote (2 a))`。
 
+其中Number、String和Boolean称为*Atom*。
+
 ## lambda
 
 用过Python的人都知道Python里面有个keyword叫做lambda。但是Python里面的lambda功能很弱，

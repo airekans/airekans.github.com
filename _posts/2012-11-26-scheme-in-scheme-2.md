@@ -40,10 +40,17 @@ Lisp代码可以很容易的看成是Lisp里面的数据，基本不用什么特
 (define l (read (open-input-string "(define a 1)")))
 (if (eq? (quote define) (car l))
     (display "It's definition!")
-	(display "It's not definition!")){% endhighlight %}
+	(display "It's not definition!"))
+
+(if (number? (car (car (car l))))
+    (display "It's number!")
+	(display "It's not number!")){% endhighlight %}
 
 上面的代码里面，我将用`read`读进来的表达式用`car`取出第一个symbol，
-然后用`eq?`来进行比对。
+然后用`eq?`来进行比对。`eq?`是一个用来判断两个symbol是否一样的函数。
+而`number?`就是一个用来判断参数是不是Number类型的函数。
+除了上面两个函数之外，还有`string?`函数，
+它可以用来判断参数是不是String类型的。
 
 看了上面的代码，估计你心中已经大概有了一点概念了吧？
 
@@ -60,7 +67,47 @@ Lisp代码可以很容易的看成是Lisp里面的数据，基本不用什么特
 
 比如：
 
-{% highlight scheme %}
+{% highlight scheme linenos %}
 (pair? 1) ; false
 (pair? (cons 1 2)) ; true{% endhighlight %}
+
+有了`pair?`之后，我们就可以很方便判断一个S表达式是不是atom了。
+下面是一个只解析atom的解析器：
+
+{% highlight scheme linenos %}
+(define (eval exp)
+  (if (not (pair? exp))
+      (if (number? exp)
+	      exp
+		  (display "Unknown type"))
+	  (display "Unknown type")))
+
+(eval 1) ; returns 1
+(eval 10) ; returns 10
+(eval "hello") ; display "Unknown type"{% endhighlight %}
+
+看到上面的代码中，实际上`eval`的定义可以简化成只用一个`number?`判断，
+因为`number?`就是一个类型检查。如下：
+
+{% highlight scheme linenos %}
+(define (eval exp)
+  (if (number? exp)
+      exp
+      (display "Unknown type"))){% endhighlight %}
+
+如果现在加入对字符类型的atom进行解析的话，要怎么写呢？还记得之前我们有`string?`
+来对参数进行String的类型判断么？对，我们就用`string?`就可以了，如下：
+
+{% highlight scheme linenos %}
+(define (eval exp)
+  (if (number? exp)
+      exp
+	  (if (string? exp)
+	      exp
+          (display "Unknown type"))))
+
+(eval 11) ; returns 11
+(eval "hello") ; returns "hello"
+(eval (quote a)) ; display "Unknown type"{% endhighlight %}
+
 
