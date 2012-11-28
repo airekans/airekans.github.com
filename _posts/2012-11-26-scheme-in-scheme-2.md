@@ -110,4 +110,82 @@ Lisp代码可以很容易的看成是Lisp里面的数据，基本不用什么特
 (eval "hello") ; returns "hello"
 (eval (quote a)) ; display "Unknown type"{% endhighlight %}
 
+# cond表达式
 
+在上面的eval里面，我们用了两个if，而if越多，嵌套就越多，
+那么想想我们如果要处理的表达式类型越多，那么我们嵌套不就……
+在C里面，可以用`switch`或者连续的`if`来避免深层的嵌套，比如：
+
+{% highlight c linenos %}
+if (i == 1)
+{
+    i++;
+}
+else if (i == 2)
+{
+    i--;
+}
+else
+{
+    i += 2;
+}{% endhighlight %}
+
+其实在Scheme里面，有一个`cond`表达式，它的作用和上面C里面的`if`类似。
+
+{% highlight scheme linenos %}
+(cond ((= a 1) a)
+      ((> a 1) (+ a 1))
+	  (else (- a 1))){% endhighlight %}
+
+上面的表达式应该不难看懂吧？我们用C来表示一次，你应该就是明白了：
+
+{% highlight c linenos %}
+if (a == 1)
+{
+    a;
+}
+else if (a > 1)
+{
+    a + 1;
+}
+else
+{
+    a - 1;
+}{% endhighlight %}
+
+有了`cond`表达式，那么我们用`cond`来“重构”一下我们的解析器吧。
+
+{% highlight scheme linenos %}
+(define (eval exp)
+  (cond ((number? exp) exp)
+        ((string? exp) exp)
+        (else (display "Unknown type")))){% endhighlight %}
+
+现在我们的解析器已经可以处理Number和String了，那么还有什么是atom呢？
+还有Boolean我们没有处理。那我们现在来分析一下怎么处理Boolean吧。首先需要注意的是，
+在mit-scheme里面，boolean的值是`#t`和`#f`，而在我们要实现的解析器里面，
+boolean的值是`true`和`false`。这里的关系，和用C来实现Scheme是类似的，
+实现语言C里面的boolean是1和0，而被实现的语言里面的boolean是`true`和`false`。
+而这里`true`和`false`从解析器的角度来说是symbol类型的，所以我们可以用`eq?`
+来进行判断。
+
+有了上面的说明之后，那么我们现在来加入对boolean的解析吧。
+
+{% highlight scheme linenos %}
+(define (eval exp)
+  (cond ((number? exp) exp)
+        ((string? exp) exp)
+		((or (eq? (quote true) exp) (eq? (quote false) exp)) exp)
+        (else (display "Unknown type")))){% endhighlight %}
+
+上面的`or`和C里面的`||`或者Python里面的`or`是一样的作用的。
+OK，有了上面解析器，那么现在我们玩一玩吧！
+
+{% highlight scheme linenos %}
+(eval (read (open-input-string "1"))) ; 等同于(eval 1)
+(eval "hello") ; returns "hello"
+(eval (read (open-input-string "true"))) ; returns true
+(eval (read (open-input-string "false"))) ; return false{% endhighlight %}
+
+好了，现在我们已经有了一个能用的解析器了，虽然它现在只能解析atom，但是在接下来的几节中，
+我们还会继续的丰富这个解析器，它就能慢慢地解析更多的东西啦。
