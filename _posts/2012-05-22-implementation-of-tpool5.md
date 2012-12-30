@@ -82,7 +82,7 @@ private:
 有定义可以看出，用户必须保证在`ConditionVariable`的生命周期内，Mutex必须一直有效(也就是Mutex的生命周期必须>=ConditionVariable的生命周期)。  
 其中最重要的函数就是`Notify`和`NotifyAll`，分别是对`pthread_cond_signal`和`pthread_cond_broadcast`的简单封装。
 
-而对于等待和唤醒，在UNPv2[1]里面有介绍过有几个经典的模式。而我在这里将这几个模式通过类的形式实现，从而减少用户出错的可能。
+而对于等待和唤醒，在UNPv2\[1\]里面有介绍过有几个经典的模式。而我在这里将这几个模式通过类的形式实现，从而减少用户出错的可能。
 
 对于等待，是通过`ConditionWaitLocker`来实现的，用法如下：
 
