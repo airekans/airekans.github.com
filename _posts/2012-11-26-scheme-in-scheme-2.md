@@ -40,11 +40,11 @@ Lisp代码可以很容易的看成是Lisp里面的数据，基本不用什么特
 (define l (read (open-input-string "(define a 1)")))
 (if (eq? (quote define) (car l))
     (display "It's definition!")
-	(display "It's not definition!"))
+    (display "It's not definition!"))
 
 (if (number? (car (car (car l))))
     (display "It's number!")
-	(display "It's not number!")){% endhighlight %}
+    (display "It's not number!")){% endhighlight %}
 
 上面的代码里面，我将用`read`读进来的表达式用`car`取出第一个symbol，
 然后用`eq?`来进行比对。`eq?`是一个用来判断两个symbol是否一样的函数。
@@ -78,9 +78,9 @@ Lisp代码可以很容易的看成是Lisp里面的数据，基本不用什么特
 (define (eval exp)
   (if (not (pair? exp))
       (if (number? exp)
-	      exp
-		  (display "Unknown type"))
-	  (display "Unknown type")))
+          exp
+          (display "Unknown type"))
+      (display "Unknown type")))
 
 (eval 1) ; returns 1
 (eval 10) ; returns 10
@@ -102,8 +102,8 @@ Lisp代码可以很容易的看成是Lisp里面的数据，基本不用什么特
 (define (eval exp)
   (if (number? exp)
       exp
-	  (if (string? exp)
-	      exp
+      (if (string? exp)
+          exp
           (display "Unknown type"))))
 
 (eval 11) ; returns 11
@@ -135,7 +135,7 @@ else
 {% highlight scheme linenos %}
 (cond ((= a 1) a)
       ((> a 1) (+ a 1))
-	  (else (- a 1))){% endhighlight %}
+      (else (- a 1))){% endhighlight %}
 
 上面的表达式应该不难看懂吧？我们用C来表示一次，你应该就是明白了：
 
@@ -175,7 +175,7 @@ boolean的值是`true`和`false`。这里的关系，和用C来实现Scheme是�
 (define (eval exp)
   (cond ((number? exp) exp)
         ((string? exp) exp)
-		((or (eq? (quote true) exp) (eq? (quote false) exp)) exp)
+        ((or (eq? (quote true) exp) (eq? (quote false) exp)) exp)
         (else (display "Unknown type")))){% endhighlight %}
 
 上面的`or`和C里面的`||`或者Python里面的`or`是一样的作用的。
