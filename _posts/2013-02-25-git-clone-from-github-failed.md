@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "git clone from github failed"
+title: "Git Clone From Github Failed"
 description: ""
 category: git
 tags: [git, github]
