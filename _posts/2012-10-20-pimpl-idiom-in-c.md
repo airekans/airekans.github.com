@@ -97,7 +97,8 @@ private:
 
 可以当你写了上面的代码之后，编译，Bang! 编译器给你报一个错，说是Pimpl是incomplete
 type。这下你就蒙了吧？！(在新版本的C++ STL里面，加上了`#pragma GCC system_header`，
-所以是不会报错的。如果自己copy出`auto_ptr`，那还是会报错)
+所以是不会报错的。如果自己copy出`auto_ptr`，那还是会报错。
+参看[这里](http://gcc.gnu.org/onlinedocs/cpp/System-Headers.html#System-Headers))
 
 其实要fix上面的编译错误，你只需要加上A的destructor的声明，然后在cpp文件里面实现一个
 空的destructor就可以了。
