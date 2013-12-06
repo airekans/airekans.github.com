@@ -94,3 +94,18 @@ def test_list_flavors_with_detail(self):
 
     self.nova_volume_detach(){% endhighlight %}
 
+### tempest.stress
+
+stress实际上是一个简单的针对OpenStack的压力测试框架。这个包里面声明了驱动函数，`fixture`类，一set的sample配置函数。
+压力测试通过这个命令来跑：`run_stress.py etc/sample-test.json -d 30`
+
+而在主要的驱动函数是`tempest.stress.driver.stress_openstack`。
+在`stress_openstack`会从配置文件里面读组需要跑的操作，以及需要跑的进程数。然后函数就会起对应数目的进程，然后在进程里面调用对用的`execute`函数。
+
+最后函数会在指定时间之后统计函数的结果，然后呈现给用户。
+而具体的动作，就在`tempest.stress.actions`里面定义，里面定义了不同的测试。测试都继承了`tempest.stress.stressaction.StressAction`，这个类声明了`execute`函数。所以需要新增一个压力测试的Action，就声明一个新的类继承于`StressAction`并重写run函数。
+
+
+除了上面说明的几个包，tempest的另外几个包比如cli和whitebox都相对简单，这里就不做详述了。
+
+总的来说tempest是一个包含了各种测试的包，结构不是太复杂，适合了解OpenStack的各种组件。
