@@ -36,7 +36,7 @@ Lisp代码可以很容易的看成是Lisp里面的数据，基本不用什么特
 
 上面的说明是什么意思？用下面的代码来说明一下应该最好：
 
-{% highlight scheme linenos %}
+{% highlight scheme linenos=table %}
 (define l (read (open-input-string "(define a 1)")))
 (if (eq? (quote define) (car l))
     (display "It's definition!")
@@ -67,14 +67,14 @@ Lisp代码可以很容易的看成是Lisp里面的数据，基本不用什么特
 
 比如：
 
-{% highlight scheme linenos %}
+{% highlight scheme linenos=table %}
 (pair? 1) ; false
 (pair? (cons 1 2)) ; true{% endhighlight %}
 
 有了`pair?`之后，我们就可以很方便判断一个S表达式是不是atom了。
 下面是一个只解析atom的解析器：
 
-{% highlight scheme linenos %}
+{% highlight scheme linenos=table %}
 (define (eval exp)
   (if (not (pair? exp))
       (if (number? exp)
@@ -89,7 +89,7 @@ Lisp代码可以很容易的看成是Lisp里面的数据，基本不用什么特
 看到上面的代码中，实际上`eval`的定义可以简化成只用一个`number?`判断，
 因为`number?`就是一个类型检查。如下：
 
-{% highlight scheme linenos %}
+{% highlight scheme linenos=table %}
 (define (eval exp)
   (if (number? exp)
       exp
@@ -98,7 +98,7 @@ Lisp代码可以很容易的看成是Lisp里面的数据，基本不用什么特
 如果现在加入对字符类型的atom进行解析的话，要怎么写呢？还记得之前我们有`string?`
 来对参数进行String的类型判断么？对，我们就用`string?`就可以了，如下：
 
-{% highlight scheme linenos %}
+{% highlight scheme linenos=table %}
 (define (eval exp)
   (if (number? exp)
       exp
@@ -116,7 +116,7 @@ Lisp代码可以很容易的看成是Lisp里面的数据，基本不用什么特
 那么想想我们如果要处理的表达式类型越多，那么我们嵌套不就……
 在C里面，可以用`switch`或者连续的`if`来避免深层的嵌套，比如：
 
-{% highlight c linenos %}
+{% highlight cpp linenos=table %}
 if (i == 1)
 {
     i++;
@@ -132,14 +132,14 @@ else
 
 其实在Scheme里面，有一个`cond`表达式，它的作用和上面C里面的`if`类似。
 
-{% highlight scheme linenos %}
+{% highlight scheme linenos=table %}
 (cond ((= a 1) a)
       ((> a 1) (+ a 1))
       (else (- a 1))){% endhighlight %}
 
 上面的表达式应该不难看懂吧？我们用C来表示一次，你应该就是明白了：
 
-{% highlight c linenos %}
+{% highlight cpp linenos=table %}
 if (a == 1)
 {
     a;
@@ -155,7 +155,7 @@ else
 
 有了`cond`表达式，那么我们用`cond`来“重构”一下我们的解析器吧。
 
-{% highlight scheme linenos %}
+{% highlight scheme linenos=table %}
 (define (eval exp)
   (cond ((number? exp) exp)
         ((string? exp) exp)
@@ -171,7 +171,7 @@ boolean的值是`true`和`false`。这里的关系，和用C来实现Scheme是�
 
 有了上面的说明之后，那么我们现在来加入对boolean的解析吧。
 
-{% highlight scheme linenos %}
+{% highlight scheme linenos=table %}
 (define (eval exp)
   (cond ((number? exp) exp)
         ((string? exp) exp)
@@ -181,7 +181,7 @@ boolean的值是`true`和`false`。这里的关系，和用C来实现Scheme是�
 上面的`or`和C里面的`||`或者Python里面的`or`是一样的作用的。
 OK，有了上面解析器，那么现在我们玩一玩吧！
 
-{% highlight scheme linenos %}
+{% highlight scheme linenos=table %}
 (eval (read (open-input-string "1"))) ; 等同于(eval 1)
 (eval "hello") ; returns "hello"
 (eval (read (open-input-string "true"))) ; returns true
