@@ -34,7 +34,7 @@ Lock free则完全将这些互斥减到最小的程度。
 粗略的展示一下实现代码：
 
     
-{% highlight cpp linenos %}
+{% highlight cpp linenos=table %}
 typedef struct node_t {
 	TYPE value;
 	node_t *next
@@ -81,7 +81,7 @@ dequeue(Q *q, TYPE *pvalue) {
 
 而对于Non Blocking Queue，最核心的操作是一个叫做Compare And Swap(简称CAS)的操作。这个操作用C++来表示大概是下面的代码：
 
-{% highlight cpp linenos %}
+{% highlight cpp linenos=table %}
 template <typename T>
 bool CompareAndSwap(T* dest, T oldValue, T newValue)
 {
@@ -99,7 +99,7 @@ bool CompareAndSwap(T* dest, T oldValue, T newValue)
 
 在著名的《Simple, Fast, and Practical Non-Blocking and Blocking Concurrent Queue Algorithms》论文里面，就有如下的Non Blocking Queue实现伪码：
 
-{% highlight cpp linenos %}
+{% highlight cpp linenos=table %}
 structure pointer_t {ptr: pointer to node_t, count: unsigned integer}
   structure node_t {value: data type, next: pointer_t}
   structure queue_t {Head: pointer_t, Tail: pointer_t}

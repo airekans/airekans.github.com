@@ -27,7 +27,7 @@ twisted是一个Python的基于事件循环的网络库，里面实现了基本�
 
 假设我们利用同步的方式来完成上述的功能，对应的代码应该是像下面这样：
 
-{% highlight py linenos %}
+{% highlight py linenos=table %}
 def stringReceived(self, shortUrl):
 	self.transport.loseConnection()
 	self.downloadVideoFromShortUrl(shortUrl)
@@ -48,7 +48,7 @@ def downloadVideoFromShortUrl(self, shortUrl):
 
 基本的代码如下：
 
-{% highlight py linenos %}
+{% highlight py linenos=table %}
 def downloadVideoFromShortUrlAsync(self, shortUrl):
 	d = transformShortUrlAsync(shortUrl)
 
@@ -78,7 +78,7 @@ def downloadVideoFromShortUrlAsync(self, shortUrl):
 
 首先我们的几个基本调用还是异步，那么用了`inlineCallbacks`之后的代码如下：
 
-{% highlight py linenos %}
+{% highlight py linenos=table %}
 @inlineCallbacks
 def downloadVideoFromShortUrlAsync(self, shortUrl):
 	try:
@@ -121,7 +121,7 @@ def downloadVideoFromShortUrlAsync(self, shortUrl):
 
 所以我们最关心的是，How does the magic happen? 那我们直接来看看代码实现。注意这里我假设你知道Python的decorator， 也知道Python的generator。
 
-{% highlight py linenos %}
+{% highlight py linenos=table %}
 def inlineCallbacks(f):
 	def unwindGenerator(*args, **kwargs):
 		try:
@@ -139,7 +139,7 @@ def inlineCallbacks(f):
 
 其中的mergeFunctionMetaData其实就是将f的\_\_name\_\_和\_\_doc\_\_赋给`unwindGenerator`。而我们从`unwindGenerator`可以看到，函数首先调用了f，也就是被修饰的函数，而因为要用`inlineCallbacks`的函数一般都是generator，这个函数返回的是一个generator object。所以最重要的函数是`_inlineCallbacks`这个函数。我们再来看看它的实现。
 
-{% highlight py linenos %}
+{% highlight py linenos=table %}
 def _inlineCallbacks(result, g, deferred):
 	waiting = [True, # waiting for result?
 			   None] # result

@@ -17,7 +17,7 @@ mutex(互斥锁)是用来实现多线程同步的主要机制之一。而Linux�
 
 在Tpool中也是类似，Mutex的定义如下：
 
-{% highlight cpp linenos %}
+{% highlight cpp linenos=table %}
 class Mutex : private boost::noncopyable {
     friend class MutexLocker;
     friend class MutexWaitLocker;
@@ -38,7 +38,7 @@ private:
 
 然后用的时候通过一个Locker来自动的把Mutex加锁和解锁：
 
-{% highlight cpp linenos %}
+{% highlight cpp linenos=table %}
 MutexLocker::MutexLocker(Mutex& m)
   : m_mutex(m)
 {
@@ -58,7 +58,7 @@ MutexLocker::~MutexLocker()
 
 由于条件变量是与一个互斥锁联系起来的，所以我实现上要求在构造条件变量的时候就要传入一个Mutex。定义如下：
 
-{% highlight cpp linenos %}
+{% highlight cpp linenos=table %}
 class ConditionVariable : private boost::noncopyable {
     friend class ConditionWaitLocker;
     friend class ConditionNotifyLocker;
@@ -86,7 +86,7 @@ private:
 
 对于等待，是通过`ConditionWaitLocker`来实现的，用法如下：
 
-{% highlight cpp linenos %}
+{% highlight cpp linenos=table %}
 {
   sync::ConditionNotifyLocker l(cond, NotifyFunc());
   WAIT_CONDITION = false; // 设置条件为true
@@ -94,7 +94,7 @@ private:
 
 而唤醒是通过`ConditionNotifyLocker`和`ConditionNotifyAllLocker`来使用，用法如下：
 
-{% highlight cpp linenos %}
+{% highlight cpp linenos=table %}
 {
   sync::ConditionNotifyLocker l(condition, NotifyFunc());
   WAIT_CONDITION = false; // 设置条件为true

@@ -18,7 +18,7 @@ Tpool的工作者线程使用了类似`boost::thread`实现的线程实现。
 
 假设我们有下面这样一个[基本的线程][12]定义：
 
-{% highlight cpp linenos %}
+{% highlight cpp linenos=table %}
 class Thread : private boost::noncopyable {
 public:
 	template
@@ -40,7 +40,7 @@ private:
 
 首先看一下`WorkerThread`的声明：
 
-{% highlight cpp linenos %}
+{% highlight cpp linenos=table %}
 class WorkerThread {
 private:
 	enum State {
@@ -66,7 +66,7 @@ public:
 
 而`WorkerThread`的定义如下：
 
-{% highlight cpp linenos %}
+{% highlight cpp linenos=table %}
 template 
 WorkerThread::WorkerThread(TaskQueueBase::Ptr taskQueue,
 				 FinishAction action)
@@ -97,7 +97,7 @@ WorkerThread::WorkerThread(TaskQueueBase::Ptr taskQueue,
 
 而其中的`ThreadFunction`就是线程函数，定义如下：
 
-{% highlight cpp linenos %}
+{% highlight cpp linenos=table %}
 template 
 void WorkerThread::ThreadFunction(FinishAction action)
 {
@@ -110,7 +110,7 @@ void WorkerThread::ThreadFunction(FinishAction action)
 
 最重要的就是`WorkFunction`。定义如下：
 
-{% highlight cpp linenos %}
+{% highlight cpp linenos=table %}
 void WorkerThread::WorkFunction()
 {
     SetState(RUNNING);

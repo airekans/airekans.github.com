@@ -16,7 +16,7 @@ tags: [cpp, design pattern]
 考虑一下下面的情况，假设有一个类A，它包含了成员变量b和c，类型分别为B和C，而如果D类
 要使用A类的话，那也变相依赖了B和C。如下：
 
-{% highlight cpp linenos %}
+{% highlight cpp linenos=table %}
 #include "B.h"
 #include "C.h"
 
@@ -29,7 +29,7 @@ private:
 
 这个时候如果D要使用A类的话，那么D就要像下面那样去写：
 
-{% highlight cpp linenos %}
+{% highlight cpp linenos=table %}
 #include "A.h"
 
 class D
@@ -52,7 +52,7 @@ private:
 然后再声明一个成员变量，类型是这个类中类的指针。用上面的例子来说明一下会清楚一下，
 代码如下：
 
-{% highlight cpp linenos %}
+{% highlight cpp linenos=table %}
 class A
 {
 private:
@@ -63,7 +63,7 @@ private:
 有了上面的定义，那么D类就可以完全不用知道A类的细节，而且链接的时候也可以完全不用管B和C了。
 然后在A.cpp里面，我们就像下面这样去定义就好了：
 
-{% highlight cpp linenos %}
+{% highlight cpp linenos=table %}
 struct A::Pimpl
 {
     B b;
@@ -82,7 +82,7 @@ A::A()
 
 也就是如下面这样：
 
-{% highlight cpp linenos %}
+{% highlight cpp linenos=table %}
 #include <memory>
 
 class A
@@ -111,7 +111,7 @@ type。这下你就蒙了吧？！(在新版本的C++ STL里面，加上了`#pra
 
 我们先来看一下auto_ptr的简化定义：
 
-{% highlight cpp linenos %}
+{% highlight cpp linenos=table %}
 template <typename T>
 class auto_ptr
 {
@@ -144,7 +144,7 @@ private:
 
 也就是说，如果有下面的这样一个模板类：
 
-{% highlight cpp linenos %}
+{% highlight cpp linenos=table %}
 template <typename T>
 class TemplateClass
 {
@@ -193,7 +193,7 @@ auto\_ptr的析构函数就被编译器特化了。
 
 所以例子里面的A在经过编译后是和下面的代码等价的：
 
-{% highlight cpp linenos %}
+{% highlight cpp linenos=table %}
 class A
 {
 public:
@@ -227,7 +227,7 @@ boost::scoped\_ptr和boost::shared\_ptr来实现。而scoped\_ptr和auto\_ptr
 但是通过shared\_ptr来实现的话，我们就连析构函数都可以省略！也就是说，
 如果我写下面的代码，是完全正确的：
 
-{% highlight cpp linenos %}
+{% highlight cpp linenos=table %}
 class A
 {
 public:
@@ -249,7 +249,7 @@ private:
 
 来看看简化之后的shared\_ptr的实现吧：
 
-{% highlight cpp linenos %}
+{% highlight cpp linenos=table %}
 
 class sp_counted_base
 {

@@ -29,7 +29,7 @@ tags: [emacs, elisp]
 
 在调用`find-tag`的时候，就会执行下面的语句：
 
-{% highlight cl linenos %}
+{% highlight cl linenos=table %}
 (defun find-tag (tagname &optional next-p regexp-p)
   (interactive (find-tag-interactive "Find tag: "))
   (let* ((buf (find-tag-noselect tagname next-p regexp-p)) ;****
@@ -43,7 +43,7 @@ tags: [emacs, elisp]
 
 下面是`find-tag-noselect`的定义：
 
-{% highlight cl linenos %}
+{% highlight cl linenos=table %}
 (defun find-tag-noselect (tagname &optional next-p regexp-p)
   (interactive (find-tag-interactive "Find tag: "))
 
@@ -104,7 +104,7 @@ tags: [emacs, elisp]
 
 下面是`find-tag-in-order`的定义：
 
-{% highlight cl linenos %}
+{% highlight cl linenos=table %}
 (defun find-tag-in-order (pattern
                           search-forward-func
                           order
@@ -198,7 +198,7 @@ tags: [emacs, elisp]
 
 `order`在tag是正则表达式的时候是`find-tag-regexp-tag-order`，而在tag是普通的字符串的时候就是`find-tag-tag-order`。这里我着重看了一下`find-tag-tag-order`，它默认是下面的列表：
 
-{% highlight cl linenos %}
+{% highlight cl linenos=table %}
 (tag-exact-file-name-match-p
  tag-file-name-match-p
  tag-exact-match-p

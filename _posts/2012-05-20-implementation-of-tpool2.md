@@ -17,7 +17,7 @@ tags: [tpool, async]
 
 在Tpool中，定义了一个抽象的`TaskQueueBase`接口，定义如下：
 
-{% highlight cpp linenos %}
+{% highlight cpp linenos=table %}
 namespace tpool {
   class TaskQueueBase {
   public:
@@ -39,7 +39,7 @@ namespace tpool {
 
 `LinearTaskQueue`的声明如下：
 
-{% highlight cpp linenos %}
+{% highlight cpp linenos=table %}
 namespace tpool {
   class LinearTaskQueue : public TaskQueueBase {
   public:
@@ -70,7 +70,7 @@ namespace tpool {
 
 下面是Push的实现：
 
-{% highlight cpp linenos %}
+{% highlight cpp linenos=table %}
 void LinearTaskQueue::Push(TaskBase::Ptr task)
 {
   ConditionNotifyAllLocker l(m_mutexCond,
@@ -82,7 +82,7 @@ void LinearTaskQueue::Push(TaskBase::Ptr task)
 
 而`Pop`的实现如下：
 
-{% highlight cpp linenos %}
+{% highlight cpp linenos=table %}
 TaskBase::Ptr LinearTaskQueue::Pop()
 {
   // wait until task queue is not empty

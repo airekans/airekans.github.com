@@ -9,7 +9,7 @@ tags: [c, Programming Language]
 
 事情的起因是这样的，在wx的源码里面看到了下面一段比较诡异的代码：
 
-{% highlight cpp linenos %}
+{% highlight cpp linenos=table %}
 switch ( level ) {
 	case wxLOG_Info:
 		if ( GetVerbose() )  // ***** Note here ****
@@ -33,7 +33,7 @@ switch ( level ) {
 
     gcc -S -o switch.s switch.c
 
-{% highlight cpp linenos %}
+{% highlight cpp linenos=table %}
 int main(int argc, const char *argv[])
 {
 	int i = 1;
@@ -58,7 +58,7 @@ int main(int argc, const char *argv[])
 
 来看一下汇编输出，注意这里的汇编是[GAS][1]的语法：
 
-{% highlight gas linenos %}
+{% highlight gas linenos=table %}
 .file	"switch.c"
 	.text
 .globl main
@@ -102,7 +102,7 @@ main:
 
 注意一下最主要的部分：
 
-{% highlight gas linenos %}
+{% highlight gas linenos=table %}
 movl	$1, -4(%ebp)
 movl	-4(%ebp), %eax{% endhighlight %}
 
@@ -110,7 +110,7 @@ movl	-4(%ebp), %eax{% endhighlight %}
 
 接下来的那段就是switch：
 
-{% highlight gas linenos %}
+{% highlight gas linenos=table %}
 	movl	%eax, -8(%ebp)  # 判断部分 switch (i)
 	cmpl	$1, -8(%ebp)
 	je	.L3
@@ -133,7 +133,7 @@ movl	-4(%ebp), %eax{% endhighlight %}
 而几个case的地方，实际上汇编代码是连接起来的，所以像开头所说的那部分condition和body分开的情况是可以存在的。  
 实际上C里面的switch完全等价于goto语句，如下面的switch：
 
-{% highlight cpp linenos %}
+{% highlight cpp linenos=table %}
 switch (i)
 {
 	case 1:
@@ -151,7 +151,7 @@ switch (i)
 
 等价于下面的goto语句实现：
 
-{% highlight gas linenos %}
+{% highlight gas linenos=table %}
 if (i == 1)
 	goto L1;
 else if (i == 2)

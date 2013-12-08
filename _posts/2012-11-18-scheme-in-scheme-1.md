@@ -93,13 +93,13 @@ Scheme作为Lisp最大的两个变种之一（另外一个是Common Lisp），�
 Scheme里面的lambda定义语法如下：
 
 
-{% highlight scheme linenos %}
+{% highlight scheme linenos=table %}
 (lambda (args)
   (body)){% endhighlight %}
 
 比如说下面的都是lambda
 
-{% highlight scheme linenos %}
+{% highlight scheme linenos=table %}
 (lambda (x y)
   (+ x y))
 
@@ -113,14 +113,14 @@ Scheme里面的lambda定义语法如下：
 
 定义包括变量定义和函数定义。其中变量定义是的语法如下：
 
-{% highlight scheme linenos %}
+{% highlight scheme linenos=table %}
 (define a 1){% endhighlight %}
 
 上面的表达式是定义了一个名为a的变量，他的值是1。
 
 而函数定义的语法如下：
 
-{% highlight scheme linenos %}
+{% highlight scheme linenos=table %}
 (define (add x y)
   (+ x y)){% endhighlight %}
 
@@ -129,7 +129,7 @@ Scheme里面的lambda定义语法如下：
 
 而实际上，函数定义和变量定义是一样的，也就是函数定义等价于下面的语句：
 
-{% highlight scheme linenos %}
+{% highlight scheme linenos=table %}
 (define add
   (lambda (x y)
     (+ x y))){% endhighlight %}
@@ -138,7 +138,7 @@ Scheme里面的lambda定义语法如下：
 
 还有一点值得说明的是，在函数的定义里面可以有嵌套的定义，例如：
 
-{% highlight scheme linenos %}
+{% highlight scheme linenos=table %}
 (define (fact-iter n)
   (define (iter x result)
     (if (= x 1)
@@ -157,7 +157,7 @@ Scheme里面的lambda定义语法如下：
 
 比如说下面的Scheme代码：
 
-{% highlight scheme linenos %}
+{% highlight scheme linenos=table %}
 (lambda (x)
   (lambda (y)
     (+ x y))){% endhighlight %}
@@ -174,7 +174,7 @@ lexical scope的意思是，闭包里面的变量的取值是根据其定义的�
 而dynamic scope的意思就是说，闭包里面的变量值是根据调用的时候的环境来进行取值。
 比如说下面的例子里面，
 
-{% highlight scheme linenos %}
+{% highlight scheme linenos=table %}
 (define (inc x)
   (lambda (y)
     (+ x y)))
@@ -191,7 +191,7 @@ lexical scope的意思是，闭包里面的变量的取值是根据其定义的�
 
 最基本的if条件语句是下面这样的
 
-{% highlight scheme linenos %}
+{% highlight scheme linenos=table %}
 (if (= x 1)
     (+ x 1)
     x){% endhighlight %}
@@ -206,7 +206,7 @@ x == 1 ? x + 1 : x{% endhighlight %}
 OK，说了上面那么多，接下来我用上面的语法说明写一个例子程序，并说明预期的输出。
 接下来的几章，我们就会用这个例子程序来验证我们的解析器的正确性。
 
-{% highlight scheme linenos %}
+{% highlight scheme linenos=table %}
 ;;;; 测试递归
 (define (fact n)
   (if (< n 2)

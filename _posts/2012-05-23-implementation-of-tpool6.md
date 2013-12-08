@@ -32,7 +32,7 @@ tags: [tpool, async]
 
 而对于条件2，就是在线程结束后，i的值仍然是和`Cancel`之后一样，并且任务队列里面应该还有一个任务。
 
-{% highlight cpp linenos %}
+{% highlight cpp linenos=table %}
 TEST(WorkerThread, test_Cancel)
 {
   int counter = 0;

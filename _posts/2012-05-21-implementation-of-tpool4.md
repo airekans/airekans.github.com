@@ -17,7 +17,7 @@ tags: [tpool, async]
 
 Tpool中的任务定义如下：
 
-{% highlight cpp linenos %}
+{% highlight cpp linenos=table %}
 class TaskBase {
 public:
 	enum State {
@@ -47,7 +47,7 @@ private:
 
 比如说可以创建一个这样的任务：
 
-{% highlight cpp linenos %}
+{% highlight cpp linenos=table %}
 struct FakeTask : public TaskBase {
 	virtual void DoRun()
 	{
@@ -57,7 +57,7 @@ struct FakeTask : public TaskBase {
 
 然后用下面的语句把Task加到线程池里面：
 
-{% highlight cpp linenos %}
+{% highlight cpp linenos=table %}
 LFixedThreadPool threadPool;
 threadPool.AddTask(TaskBase::Ptr(new FakeTask));{% endhighlight %}
 
@@ -67,7 +67,7 @@ threadPool.AddTask(TaskBase::Ptr(new FakeTask));{% endhighlight %}
 
 工作者线程是通过查询一个flag的状态来判断退出与否的。任务也是使用了这种方式。通过查询一个退出标志位，任务判断是否该取消，如果取消，则抛出退出异常。但是在任务里面，我们没有办法预先写好在什么时候进行判断，所以这个判断的时机就交给用户在实现任务的时候来决定。而任务只是提供了一个函数来check这个事情。这个函数在Tpool里面叫做`CheckCancellation`，定义如下：
 
-{% highlight cpp linenos %}
+{% highlight cpp linenos=table %}
 void TaskBase::CheckCancellation() const
 {
   if (m_isRequestCancel)
@@ -78,7 +78,7 @@ void TaskBase::CheckCancellation() const
 
 而用户在实现任务的时候就需要保证隔一段时间就去check一下，比如：
 
-{% highlight cpp linenos %}
+{% highlight cpp linenos=table %}
 struct FakeTask : public TaskBase {
 	virtual void DoRun()
 	{
@@ -92,7 +92,7 @@ struct FakeTask : public TaskBase {
 
 而在`Run`函数里面，不是简单的去调用`DoRun`，而是先检查`CheckCancellation`一下，这样就可以在任务没有跑的情况下也能取消的效果。如下：
 
-{% highlight cpp linenos %}
+{% highlight cpp linenos=table %}
 void TaskBase::Run()
 {
   try

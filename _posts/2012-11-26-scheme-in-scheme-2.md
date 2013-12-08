@@ -20,7 +20,7 @@ Lexer是词法分析器，也就是讲输入的字符流转换成语法定义的
 
 举个例子，看下面的代码：
 
-{% highlight scheme linenos %}
+{% highlight scheme linenos=table %}
 (read (open-input-string "(define a 1)"))  ; read from stdin
 ;;; 上面的表达式返回(define a 1),
 ;;; 这个表达式也可以用下面的表达式来获得
