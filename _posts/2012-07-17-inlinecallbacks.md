@@ -133,71 +133,71 @@ def inlineCallbacks(f):
         if not isinstance(gen, types.GeneratorType):
             raise TypeError(
                 "inlineCallbacks requires %r to produce a generator; "
-				"instead got %r" % (f, gen))
-		return _inlineCallbacks(None, gen, Deferred())
-	return mergeFunctionMetadata(f, unwindGenerator){% endhighlight %}
+                "instead got %r" % (f, gen))
+        return _inlineCallbacks(None, gen, Deferred())
+    return mergeFunctionMetadata(f, unwindGenerator){% endhighlight %}
 
 其中的mergeFunctionMetaData其实就是将f的\_\_name\_\_和\_\_doc\_\_赋给`unwindGenerator`。而我们从`unwindGenerator`可以看到，函数首先调用了f，也就是被修饰的函数，而因为要用`inlineCallbacks`的函数一般都是generator，这个函数返回的是一个generator object。所以最重要的函数是`_inlineCallbacks`这个函数。我们再来看看它的实现。
 
 {% highlight py linenos=table %}
 def _inlineCallbacks(result, g, deferred):
-	waiting = [True, # waiting for result?
-			   None] # result
+    waiting = [True, # waiting for result?
+               None] # result
 
-	while 1:
-		try:
-			isFailure = isinstance(result, failure.Failure)
-			if isFailure:
-				result = result.throwExceptionIntoGenerator(g)
-			else:
-				result = g.send(result)
-		except StopIteration:
-			# fell off the end, or "return" statement
-			deferred.callback(None)
-			return deferred
-		except _DefGen_Return, e:
-			appCodeTrace = exc_info()[2].tb_next
-			if isFailure:
-				appCodeTrace = appCodeTrace.tb_next
-			if appCodeTrace.tb_next.tb_next:
-				ultimateTrace = appCodeTrace
-				while ultimateTrace.tb_next.tb_next:
-					ultimateTrace = ultimateTrace.tb_next
-				filename = ultimateTrace.tb_frame.f_code.co_filename
-				lineno = ultimateTrace.tb_lineno
-				warnings.warn_explicit(
-					"returnValue() in %r causing %r to exit: "
-					"returnValue should only be invoked by functions decorated "
-					"with inlineCallbacks" % (
-						ultimateTrace.tb_frame.f_code.co_name,
-						appCodeTrace.tb_frame.f_code.co_name),
-					DeprecationWarning, filename, lineno)
-			deferred.callback(e.value)
-			return deferred
-		except:
-			deferred.errback()
-			return deferred
+    while 1:
+        try:
+            isFailure = isinstance(result, failure.Failure)
+            if isFailure:
+                result = result.throwExceptionIntoGenerator(g)
+            else:
+                result = g.send(result)
+        except StopIteration:
+            # fell off the end, or "return" statement
+            deferred.callback(None)
+            return deferred
+        except _DefGen_Return, e:
+            appCodeTrace = exc_info()[2].tb_next
+            if isFailure:
+                appCodeTrace = appCodeTrace.tb_next
+            if appCodeTrace.tb_next.tb_next:
+                ultimateTrace = appCodeTrace
+                while ultimateTrace.tb_next.tb_next:
+                    ultimateTrace = ultimateTrace.tb_next
+                filename = ultimateTrace.tb_frame.f_code.co_filename
+                lineno = ultimateTrace.tb_lineno
+                warnings.warn_explicit(
+                    "returnValue() in %r causing %r to exit: "
+                    "returnValue should only be invoked by functions decorated "
+                    "with inlineCallbacks" % (
+                        ultimateTrace.tb_frame.f_code.co_name,
+                        appCodeTrace.tb_frame.f_code.co_name),
+                    DeprecationWarning, filename, lineno)
+            deferred.callback(e.value)
+            return deferred
+        except:
+            deferred.errback()
+            return deferred
 
-		if isinstance(result, Deferred):
-			# a deferred was yielded, get the result.
-			def gotResult(r):
-				if waiting[]:
-					waiting[] = False
-					waiting[1] = r
-				else:
-					_inlineCallbacks(r, g, deferred)
+        if isinstance(result, Deferred):
+            # a deferred was yielded, get the result.
+            def gotResult(r):
+                if waiting[]:
+                    waiting[] = False
+                    waiting[1] = r
+                else:
+                    _inlineCallbacks(r, g, deferred)
 
-			result.addBoth(gotResult)
-			if waiting[]:
-				waiting[] = False
-				return deferred
+            result.addBoth(gotResult)
+            if waiting[]:
+                waiting[] = False
+                return deferred
 
-			result = waiting[1]
+            result = waiting[1]
 
-			waiting[] = True
-			waiting[1] = None
+            waiting[] = True
+            waiting[1] = None
 
-	return deferred{% endhighlight %}
+    return deferred{% endhighlight %}
 
 首先知道，`_inlineCallbacks`这个函数的3个参数接受的分别是上一次这个generator返回的结果(result)，这个`generator(g)`，还有这个generator对应的defer(deferred)。
 
