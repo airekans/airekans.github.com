@@ -29,16 +29,16 @@ twisted是一个Python的基于事件循环的网络库，里面实现了基本�
 
 {% highlight py linenos=table %}
 def stringReceived(self, shortUrl):
-	self.transport.loseConnection()
-	self.downloadVideoFromShortUrl(shortUrl)
+    self.transport.loseConnection()
+    self.downloadVideoFromShortUrl(shortUrl)
 
 def downloadVideoFromShortUrl(self, shortUrl):
-	try:
-		url = transformShortUrl(shortUrl)
-		video = downloadVideoFromUrl(url)
-		storeVideo(video)
-	except BaseException, e:
-		print "exception:", e{% endhighlight %}
+    try:
+        url = transformShortUrl(shortUrl)
+        video = downloadVideoFromUrl(url)
+        storeVideo(video)
+    except BaseException, e:
+        print "exception:", e{% endhighlight %}
 
 其中，`stringReceived`函数会在接收到客户端发送过来的短地址之后调用，参数就是对应的`shortUrl`。在`downloadVideoFromShortUrl`里面的是程序的主要逻辑，它按顺序的调用了shortUrl转换、从url下载地址视频和本地储存视频文件。假设每个函数都是同步调用的话，逻辑非常清晰，看代码的时候直接从上往下读就可以了。其中也包含了错误的处理，也就是一个大的try…catch，其中`transformShortUrl`和`downloadVideoFromUrl`会在出现错误的时候抛`BaseException`。
 
@@ -50,21 +50,21 @@ def downloadVideoFromShortUrl(self, shortUrl):
 
 {% highlight py linenos=table %}
 def downloadVideoFromShortUrlAsync(self, shortUrl):
-	d = transformShortUrlAsync(shortUrl)
+    d = transformShortUrlAsync(shortUrl)
 
-	def downloadVideoFromUrl(url):
-		print "long url:", url
-		d = downloadVideoFromUrlAsync(url)
+    def downloadVideoFromUrl(url):
+        print "long url:", url
+        d = downloadVideoFromUrlAsync(url)
 
-		def errDownloadVideoFromUrl(err):
-			print "exception:", err
+        def errDownloadVideoFromUrl(err):
+            print "exception:", err
 
-		d.addCallbacks(storeVideo, errDownloadVideoFromUrl)
+        d.addCallbacks(storeVideo, errDownloadVideoFromUrl)
 
-	def errTransformShortUrl(err):
-		print "exception:", err
+    def errTransformShortUrl(err):
+        print "exception:", err
 
-	d.addCallbacks(downloadVideoFromUrl, errTransformShortUrl){% endhighlight %}
+    d.addCallbacks(downloadVideoFromUrl, errTransformShortUrl){% endhighlight %}
 
 为了容易区别，我把所有异步调用的函数都在函数名后面加上Async，来表示它是一个异步调用。每个异步调用会返回一个defer，暂且你可以认为这个defer表示的是这个调用是异步的。当你要处理这个异步调用的结果的时候，就往这个defer上面添加一个函数。当这个异步调用完成之后，就会调用添加到这个defer上面的函数。
 
@@ -81,12 +81,12 @@ def downloadVideoFromShortUrlAsync(self, shortUrl):
 {% highlight py linenos=table %}
 @inlineCallbacks
 def downloadVideoFromShortUrlAsync(self, shortUrl):
-	try:
-		url = yield transformShortUrlAsync(shortUrl)
-		video = yield downloadVideoFromUrlAsync(url)
-		storeVideo(video)
-	except BaseException, e:
-		print "exception:", e{% endhighlight %}
+    try:
+        url = yield transformShortUrlAsync(shortUrl)
+        video = yield downloadVideoFromUrlAsync(url)
+        storeVideo(video)
+    except BaseException, e:
+        print "exception:", e{% endhighlight %}
 
 省略掉多出来的yield，这个代码就和同步的一模一样！！唯一不同的就是在异步调用的前面加上了yield！！
 
@@ -123,16 +123,16 @@ def downloadVideoFromShortUrlAsync(self, shortUrl):
 
 {% highlight py linenos=table %}
 def inlineCallbacks(f):
-	def unwindGenerator(*args, **kwargs):
-		try:
-			gen = f(*args, **kwargs)
-		except _DefGen_Return:
-			raise TypeError(
-				"inlineCallbacks requires %r to produce a generator; instead"
-				"caught returnValue being used in a non-generator" % (f,))
-		if not isinstance(gen, types.GeneratorType):
-			raise TypeError(
-				"inlineCallbacks requires %r to produce a generator; "
+    def unwindGenerator(*args, **kwargs):
+        try:
+            gen = f(*args, **kwargs)
+        except _DefGen_Return:
+            raise TypeError(
+                "inlineCallbacks requires %r to produce a generator; instead"
+                "caught returnValue being used in a non-generator" % (f,))
+        if not isinstance(gen, types.GeneratorType):
+            raise TypeError(
+                "inlineCallbacks requires %r to produce a generator; "
 				"instead got %r" % (f, gen))
 		return _inlineCallbacks(None, gen, Deferred())
 	return mergeFunctionMetadata(f, unwindGenerator){% endhighlight %}
