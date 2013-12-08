@@ -88,3 +88,4 @@ green     #859900  operators, other keywords
 
 /* Additional style for normal code block */
 pre { background-color: #002b36; color: #93a1a1 }
+div .highlight { -webkit-border-radius: 4px; -moz-border-radius: 4px; border-radius: 4px; }
