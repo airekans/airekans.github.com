@@ -3,7 +3,7 @@ layout: post
 title: "Installing Devstack On Ubuntu"
 description: "这篇文章介绍了Devstack在ubuntu server上面的安装步骤。大致步骤和官方文档上面的都差不多，不过有些小问题和对应的解决办法。"
 category: cloud-computing
-tags: [cloud computing, OpenStack, distributed computing]
+tags: [cloud computing, OpenStack, distributed system]
 ---
 {% include JB/setup %}
 
