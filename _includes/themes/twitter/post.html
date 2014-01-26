@@ -33,7 +33,16 @@
   </div>
   
   <div class="span4">
-  {% unless page.index %}
+  {% if page.index %}
+  {% unless site.tags == empty %}
+    <h4>Tags</h4>
+    <ul class="tag_box">
+    {% assign tags_list = site.tags %}
+    {% include JB/tags_list %}
+    </ul>
+  {% endunless %}
+    
+  {% else %}
     <h4>Published</h4>
     <div class="date"><span>{{ page.date | date_to_long_string }}</span></div>
 
@@ -61,7 +70,7 @@
     </script>
     <script type="text/javascript" src="http://v3.jiathis.com/code/jia.js?uid=1890179" charset="utf-8"></script>
     <!-- JiaThis Button END -->
-  {% endunless %}
+  {% endif %}
     
   </div>
 </div>
