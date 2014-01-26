@@ -8,15 +8,18 @@ index: true
 
 {% for post in site.posts limit:5 %}
 
-<div style="border-style:solid; border-color:#EEE;padding:5px;padding-top:20px;-webkit-border-radius:6px;-moz-border-radius:6px;border-radius:6px;">
-<h1 class="index-post-title">{{ post.title }}</h1> <em>posted on {{ post.date | date_to_string }}</em>
-<hr/>
-
-{{ post.content }}
-
+<div class="index-post">
+  <div class="index-post-header">
+    <div><h1 class="index-post-title">{{ post.title }}</h1></div>
+    <div style="color:grey;"><em>posted on {{ post.date | date_to_string }}</em></div>
+  </div>
+  <div>
+  hello
+  </div>
+  <div class="index-post-link">
+    <a href="">阅读全文...</a>
+  </div>
 </div>
-<br/>
-<br/>
 
 {% endfor %}
 

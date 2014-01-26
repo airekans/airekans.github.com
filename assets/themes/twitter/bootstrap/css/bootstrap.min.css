@@ -633,3 +633,8 @@ a.thumbnail:hover{border-color:#0088cc;-webkit-box-shadow:0 1px 4px rgba(0, 105,
 .hide{display:none;}
 .show{display:block;}
 .invisible{visibility:hidden;}
+
+div.index-post{-webkit-border-radius:6px;-moz-border-radius:6px;border-radius:6px;padding:5px;border:5px solid #eeeeee;margin-bottom:20px;}
+div.index-post:hover{background-color:#eeeeee;}
+div.index-post-header{margin-bottom:10px; border-bottom: 2px solid white;}
+div.index-post-link{margin-top: 10px;}
