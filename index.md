@@ -17,7 +17,7 @@ index: true
   hello
   </div>
   <div class="index-post-link">
-    <a href="">阅读全文...</a>
+    <a href="{{ post.url }}">阅读全文...</a>
   </div>
 </div>
 
