@@ -1,7 +1,8 @@
 ---
-layout: page
+layout: post
 title: Life About Programming
 tagline: printf("Hello, Programs!\n");
+index: true
 ---
 {% include JB/setup %}
 
