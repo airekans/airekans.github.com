@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Git Clone From Github Failed"
-description: ""
+description: "在某些环境下，从Github clone repo的时候，会遇到失败。这篇文章讲述了其中的一个解决方案。"
 category: git
 tags: [git, github]
 ---

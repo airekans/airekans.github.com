@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "MapReduce简介"
-description: ""
+description: "讲述了MapReduce的原理，用Python来讲述了一个统计url的例子。最后讲了MapReduce面临的挑战和一些解决方法。"
 category: cloud-computing
 tags: [distributed system, mapreduce]
 ---

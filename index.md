@@ -14,7 +14,7 @@ index: true
     <div style="color:grey;"><em>posted on {{ post.date | date_to_string }}</em></div>
   </div>
   <div>
-  hello
+    {{ post.description }}
   </div>
   <div class="index-post-link">
     <a href="{{ post.url }}">阅读全文...</a>
@@ -23,6 +23,6 @@ index: true
 
 {% endfor %}
 
-<div style="text-align:right;">
+<div>
   <a href="{{ site.JB.archive_path }}">More...</a>
 </div>

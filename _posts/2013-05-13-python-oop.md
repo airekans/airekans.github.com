@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Python OOP"
-description: "Python OOP"
+description: "介绍Python OOP的PPT，用slid.es写的。效果比用MS PPT炫多了！"
 category: python
 tags: [python, OOP]
 ---
