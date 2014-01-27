@@ -10,7 +10,7 @@ index: true
 
 <div class="index-post">
   <div class="index-post-header">
-    <div><h1 class="index-post-title">{{ post.title }}</h1></div>
+    <div><h1 class="index-post-title"><a class="index-post-title" href="{{ post.url }}">{{ post.title }}</a></h1></div>
     <div style="color:grey;"><em>posted on {{ post.date | date_to_string }}</em></div>
   </div>
   <div>

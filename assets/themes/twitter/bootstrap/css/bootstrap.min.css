@@ -638,3 +638,7 @@ div.index-post{-webkit-border-radius:6px;-moz-border-radius:6px;border-radius:6p
 div.index-post:hover{background-color:#eeeeee;}
 div.index-post-header{margin-bottom:10px; border-bottom: 2px solid white;}
 div.index-post-link{margin-top: 10px;}
+a.index-post-title:link{color:#333333;}
+a.index-post-title:visited{color:#333333;}
+a.index-post-title:hover{color:#005F6B;text-decoration:none;}
+a.index-post-title:active{color:#005F6B;text-decoration:none;}
