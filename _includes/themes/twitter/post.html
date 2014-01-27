@@ -35,6 +35,11 @@
   
   <div class="span4">
   {% if page.index %}
+    <h4>About Me</h4>
+    <div>
+	{{ site.aboutme }}
+    </div>
+
   {% unless site.tags == empty %}
     <h4>Tags</h4>
     <ul class="tag_box">
