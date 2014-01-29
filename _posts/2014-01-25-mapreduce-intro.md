@@ -131,3 +131,10 @@ def MyReduce(input, output):
 还有数据如何存储的问题，这也就是Google剩下的两大法宝`GFS`和`Bigtable`所要解决的问题。
 除了这些之外，整个集群如何管理，机器资源如何分配也是需要解决的，这方面Google有`Borg`(未开源)，
 Hadoop里面有`Yarn`，而Twitter也有`Mesos`。在后面我还会这几块进行一些深入的讲解。
+
+最后，在这里用Google的Paper里面给出的`MapReduce`架构图让大家了解一下整个`MapReduce`的宏观结构。
+(图片本身引用CSDN)。
+
+![MapReduce Architecture](http://img.my.csdn.net/uploads/201204/26/1335443612_8438.jpg)
+
+
