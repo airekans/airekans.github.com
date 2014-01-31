@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Scheme Interpreter In Scheme(3)"
-description: "用Scheme实现一个Scheme解析器系列第三篇，介绍如何实现变量定义和引用的解析。"
+description: ""
 category: scheme
 tags: [scheme, Programming Language]
 ---
