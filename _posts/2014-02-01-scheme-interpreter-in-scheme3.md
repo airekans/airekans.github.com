@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Scheme Interpreter In Scheme(3)"
+title: "Scheme Interpreter In Scheme(3)"
 description: ""
 category: scheme
 tags: [scheme, Programming Language]
