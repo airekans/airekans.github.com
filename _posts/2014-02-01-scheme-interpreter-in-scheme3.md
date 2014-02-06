@@ -37,7 +37,7 @@ tags: [scheme, Programming Language]
 在Scheme里面，Symbol就是一个”没有用引号的字符串“。实际上在`(define a 1)`里面，
 `define`和`a`都是symbol，而他们是一个list里面的第一和第二个元素。
 
-而一个Symbol的表示形式就是它本身，但是他的输入形式是这样的:
+而一个Symbol的_表示形式_就是它本身，但是他的_输入形式_是这样的:
 
 {% highlight scheme %}
 (quote a) ; This is symbol a.
@@ -47,4 +47,34 @@ a ; This is variable a reference.
 也就是说上面的表达式表示`a`这个symbol。为什么我们不能用`a`直接表示symbol呢？
 原因是Scheme会默认把一个symbol解析成变量引用，就像上面的第二行。
 
-所以要解析一个symbol
+而对于symbol，要判断两个symbol是否相等，可以用`eq?`函数(没错，Scheme里面`?`是合法的变量字符)。
+就像下面这样：
+
+{% highlight scheme %}
+(define a (quote b))
+(eq? a (quote b)) ; returns #t, which means true.
+{% endhighlight %}
+
+有了`eq?`，我们就可以判断一个symbol是不是我们想要的。
+
+## define表达式的解析
+
+重温一下，一个变量定义最简单是下面的形式：
+
+{% highlight scheme %}
+(define a 1)
+(define b "abc")
+{% endhighlight %}
+
+那么我们可以用下面的方式来判断一个list是不是`define`表达式：
+
+{% highlight scheme linenos=table %}
+(define (eval exp)
+  (cond ; eval other expression types mentioned before
+        ((and (pair? exp) (eq? (car exp) (quote define)))
+         (eval-definition exp))
+        (else (display "Unknown type"))))
+{% endhighlight %}
+
+
+
