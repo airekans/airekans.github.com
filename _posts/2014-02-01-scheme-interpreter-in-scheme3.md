@@ -32,6 +32,19 @@ tags: [scheme, Programming Language]
 ## 解析Symbol
 
 在之前的讲解里面，我一直没有很明确的讲到底Symbol是什么。实际上在除了Scheme/Lisp语言之外，
-很少有语言会有专门的类型处理Symbol(Ruby算是主流语言里有Symbol的一个了)。
+很少有语言会有专门的类型处理Symbol(Ruby算是主流语言里有Symbol类型的一个了)。
 
-在Scheme里面，Symbol就是
+在Scheme里面，Symbol就是一个”没有用引号的字符串“。实际上在`(define a 1)`里面，
+`define`和`a`都是symbol，而他们是一个list里面的第一和第二个元素。
+
+而一个Symbol的表示形式就是它本身，但是他的输入形式是这样的:
+
+{% highlight scheme %}
+(quote a) ; This is symbol a.
+a ; This is variable a reference.
+{% endhighlight %}
+
+也就是说上面的表达式表示`a`这个symbol。为什么我们不能用`a`直接表示symbol呢？
+原因是Scheme会默认把一个symbol解析成变量引用，就像上面的第二行。
+
+所以要解析一个symbol
