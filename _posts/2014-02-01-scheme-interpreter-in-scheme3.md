@@ -158,4 +158,5 @@ Wow，看起来非常高大上啊！！我们现在试试用这个解析器解�
 (eval (read (open-input-string "(define b \"abc\")"))) ; returns "ok"
 {% endhighlight %}
 
-嗯
+嗯，看起来不错，运行非常良好，可惜还不能引用这些定义了的变量。
+接下来我会在第4篇里面讲述如何实现变量引用的解析。
