@@ -37,7 +37,7 @@ tags: [scheme, Programming Language]
 在Scheme里面，Symbol就是一个”没有用引号的字符串“。实际上在`(define a 1)`里面，
 `define`和`a`都是symbol，而他们是一个list里面的第一和第二个元素。
 
-而一个Symbol的_表示形式_就是它本身，但是他的_输入形式_是这样的:
+而一个Symbol的__表示形式__就是它本身，但是他的__输入形式__是这样的:
 
 {% highlight scheme %}
 (quote a) ; This is symbol a.
