@@ -10,4 +10,4 @@ tags: [cpp, debug]
 # 项目背景
 
 某天在用C++做一个feature的时候，发现一个对象的成员变量无论如何都写不对，而用gdb调试之，竟然发现print出来值又是对的……
-为了最简化这个bug的背景，我在github上直接创建了一个简化的repo，大家可以看看。
+为了最简化这个bug的背景，我在github上直接创建了一个[简化的repo](https://github.com/airekans/cpp-debug-01)，大家可以看看。
