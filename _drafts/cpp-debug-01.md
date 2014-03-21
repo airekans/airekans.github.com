@@ -174,7 +174,7 @@ Child(unsigned s, unsigned* d, int i)
 用gdb里面的`disassemble`可以用来查看当前栈帧的函数反汇编结果。
 下面我们来看看`SuperChild`的构造函数的汇编(只看到assert调用)：
 
-{% highlight linenos=table %}
+{% highlight bash linenos=table %}
 (gdb) disassemble 
 Dump of assembler code for function SuperChild::SuperChild(unsigned int*):
    0x0000000000400598 <+0>:	push   %rbp
@@ -197,7 +197,86 @@ Dump of assembler code for function SuperChild::SuperChild(unsigned int*):
    0x00000000004005d9 <+65>:	mov    $0x400700,%esi
    0x00000000004005de <+70>:	mov    $0x40070a,%edi
    0x00000000004005e3 <+75>:	callq  0x400400 <__assert_fail@plt>
+   0x00000000004005e8 <+80>:	leaveq 
+   0x00000000004005e9 <+81>:	retq   
 {% endhighlight %}
 
+从代码中我们看到第11行是`callq`，也就是调用`Child`的构造函数。
+而第15行则是一个`jne`指令，后面的地址是`SuperChild`构造函数加80，我们看到是构造函数的结束的地方。
+这有点奇怪，`SuperChild`的构造函数只有一个`assert`，怎么会出现经常在`if`里面才有的`jne`指令呢？
+
+其实assert的实现正是用的一个`if`。可以在`/usr/include/assert.h`里面看到通常情况下的`assert`是一个
+宏(各个版本的libc的实现可能会有稍微的差别)：
+
+{% highlight c %}
+# define assert(expr)							\
+  ((expr)								        \
+   ? __ASSERT_VOID_CAST (0)						\
+   : __assert_fail (__STRING(expr), __FILE__, __LINE__, __ASSERT_FUNCTION))
+{% endhighlight %}
+
+这解释了上面的`jne`指令。所以jne之前的应该是载入`data`成员的值的汇编语句。
+所以关键的就是下面的这几句：
+
+{% highlight gas linenos=table %}
+mov    -0x8(%rbp),%rax
+mov    0x8(%rax),%rax
+test   %rax,%rax
+{% endhighlight %}
+
+这几句的意思对应着下面的C++语句：
+
+    this->data
+
+首先我们知道，`this`指针在C++里面实际上是相当于第一个参数传递进成员函数的，就算构造函数也不例外。
+而`-0x8(%rbp)`存放在什么值呢？我们看到在上面的第6行，有这么一句：
+
+    mov    %rdi,-0x8(%rbp)
+
+哦，原来是从`rdi`寄存器赋值过来的。而`rdi`在x64的函数调用规则里面是用来在函数调用的时候，
+存放第一个整形(或者指针)参数的。(这里多说一句，由于我机器是64位的，所以汇编跟32位的会有差别)
+哦？那就正好是`this`指针也！太好了，那么就是说现在rax就已经放着`this`指针了。
+接下来的一句`mov 0x8(%rax),%rax`，就是说从`this`的地方位移8的地方取出值。
+嗯，这正好就是`data`的偏移值。
+看起来没什么问题。好吧，取值的地方没问题，那我们看看赋值到`data`的地方吧，也就是`Child`的构造函数。
+
+### Child构造函数
+
+我们看看Child的构造函数的汇编代码：
+
+{% highlight gas linenos=table %}
+   0x0000000000400552 <+0>:	push   %rbp
+   0x0000000000400553 <+1>:	mov    %rsp,%rbp
+   0x0000000000400556 <+4>:	sub    $0x20,%rsp
+   0x000000000040055a <+8>:	mov    %rdi,-0x8(%rbp)
+   0x000000000040055e <+12>:	mov    %esi,-0xc(%rbp)
+   0x0000000000400561 <+15>:	mov    %rdx,-0x18(%rbp)
+   0x0000000000400565 <+19>:	mov    %ecx,-0x10(%rbp)
+   0x0000000000400568 <+22>:	mov    -0x8(%rbp),%rax
+   0x000000000040056c <+26>:	mov    %rax,%rdi
+   0x000000000040056f <+29>:	callq  0x400548 <Base::Base()>
+   0x0000000000400574 <+34>:	mov    -0x8(%rbp),%rax
+   0x0000000000400578 <+38>:	mov    -0xc(%rbp),%edx
+   0x000000000040057b <+41>:	mov    %edx,0x8(%rax)
+=> 0x000000000040057e <+44>:	mov    -0x8(%rbp),%rax
+   0x0000000000400582 <+48>:	mov    -0x18(%rbp),%rdx
+   0x0000000000400586 <+52>:	mov    %rdx,0x10(%rax)
+   0x000000000040058a <+56>:	mov    -0x8(%rbp),%rax
+   0x000000000040058e <+60>:	mov    -0x10(%rbp),%edx
+   0x0000000000400591 <+63>:	mov    %edx,0x18(%rax)
+   0x0000000000400594 <+66>:	leaveq 
+   0x0000000000400595 <+67>:	retq   
+{% endhighlight %}
+
+嗯，根据上面的经验，第10行是调用父类的构造函数。
+而接下来的6行，每3行对应着C++中的一个赋值语句。那么我们关注一下`data`成员的赋值：
+
+{% highlight gas %}
+mov    -0x8(%rbp),%rax
+mov    -0x18(%rbp),%rdx
+mov    %rdx,0x10(%rax)
+{% endhighlight %}
+
+第一行是载入`this`指针到`rax`寄存器，第二行
 
 
