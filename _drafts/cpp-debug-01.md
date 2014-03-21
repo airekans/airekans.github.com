@@ -134,3 +134,70 @@ Child(unsigned s, unsigned* d, int i)
 
 重启在gdb里面运行一次程序，这次我们到了`Child`的构造函数里面之后，对于`data`成员设定一个数据断点看看：
 
+    (gdb) p &data
+    $14 = (unsigned int **) 0x7fffffffdc50
+    (gdb) watch *(unsigned*) 0x7fffffffdc50
+    Hardware watchpoint 4: *(unsigned*) 0x7fffffffdc50
+
+可以看到`data`成员的地址是`0x7fffffffdc50`，然后我们看看在`Child`里面设置的时候会不会停下来：
+
+    (gdb) c
+    Continuing.
+    Hardware watchpoint 4: *(unsigned*) 0x7fffffffdc50
+     
+    Old value = 0
+    New value = 4294958188
+    Child::Child (this=0x7fffffffdc40, s=0, d=0x7fffffffdc6c, i=1) at Child.h:13
+    13	        i_data = i;
+
+嗯，停下来的，说明的确是改变了值，我们查看一下，确认一下：
+
+    (gdb) p d
+    $15 = (unsigned int *) 0x7fffffffdc6c
+    (gdb) p data
+    $16 = (unsigned int *) 0x7fffffffdc6c
+
+好的，那从`Child`返回之后，我们再看看。是没有停下来的，说明数据没有被改变。这个时候我们来看看`data`的值：
+
+    (gdb) n
+    SuperChild::SuperChild (this=0x7fffffffdc40, d=0x7fffffffdc6c) at Child.cpp:11
+    11	    assert(data != NULL);
+    (gdb) p data
+    $17 = (unsigned int *) 0x0
+
+！！！T_T 是见鬼了吗，明明连数据断点都没有触发啊，但是为什么值会改变了啊……
+
+连数据断点都不管用了，这回我只能老老实实的乖乖看汇编代码了……
+
+## 反汇编
+
+用gdb里面的`disassemble`可以用来查看当前栈帧的函数反汇编结果。
+下面我们来看看`SuperChild`的构造函数的汇编(只看到assert调用)：
+
+{% highlight linenos=table %}
+(gdb) disassemble 
+Dump of assembler code for function SuperChild::SuperChild(unsigned int*):
+   0x0000000000400598 <+0>:	push   %rbp
+   0x0000000000400599 <+1>:	mov    %rsp,%rbp
+   0x000000000040059c <+4>:	sub    $0x10,%rsp
+   0x00000000004005a0 <+8>:	mov    %rdi,-0x8(%rbp)
+   0x00000000004005a4 <+12>:	mov    %rsi,-0x10(%rbp)
+   0x00000000004005a8 <+16>:	mov    -0x8(%rbp),%rax
+   0x00000000004005ac <+20>:	mov    -0x10(%rbp),%rdx
+   0x00000000004005b0 <+24>:	mov    $0x1,%ecx
+   0x00000000004005b5 <+29>:	mov    $0x0,%esi
+   0x00000000004005ba <+34>:	mov    %rax,%rdi
+   0x00000000004005bd <+37>:	callq  0x400552 <Child::Child(unsigned int, unsigned int*, int)>
+=> 0x00000000004005c2 <+42>:	mov    -0x8(%rbp),%rax
+   0x00000000004005c6 <+46>:	mov    0x8(%rax),%rax
+   0x00000000004005ca <+50>:	test   %rax,%rax
+   0x00000000004005cd <+53>:	jne    0x4005e8 <SuperChild::SuperChild(unsigned int*)+80>
+   0x00000000004005cf <+55>:	mov    $0x400720,%ecx
+   0x00000000004005d4 <+60>:	mov    $0xb,%edx
+   0x00000000004005d9 <+65>:	mov    $0x400700,%esi
+   0x00000000004005de <+70>:	mov    $0x40070a,%edi
+   0x00000000004005e3 <+75>:	callq  0x400400 <__assert_fail@plt>
+{% endhighlight %}
+
+
+
