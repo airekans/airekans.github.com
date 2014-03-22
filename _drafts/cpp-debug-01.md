@@ -463,7 +463,27 @@ public:
 
 # 一个插曲
 
-不知道
+不知道大家上面有没有注意到一个细节，就是下面的内存布局中，`data`的起始地址：
 
+    起始地址    成员    类型   
+        0    | u_data | unsigned
+        4    | m_data | unsigned
+        8    |  seq   | unsigned
+        16   | data   | unsigned*
+        24   | i_data | int
+
+为什么命名`seq`是一个`unsigned`类型，也就是大小是4的成员，但是`data`的对象的地址却比`seq`多了8。
+多了的4个byte去了哪里呢？其实对于有经验的人来说，很快就会猜到，这应该是padding造成的。
+但是padding不是一般是以4为单位的吗？这里刚好是4啊，不需要padding啊。
+
+要注意到padding的单位是和CPU的word长度一致的，在32位系统上面，word的大小是4，所以padding也是4。
+但是在64位系统上，word的大小是8，这表示什么呢？这表示一个指针的大小是8 byte，
+并且他的地址必须是8的倍数。所以在上面的例子中，就产生了一个padding。
+具体的内存如下图所示：
+
+    0        4        8      12         16    24
+    | u_data | m_data | seq   | padding | data | i_data
+
+至此，终于完成的修复并分析完了这个bug。
 
 
