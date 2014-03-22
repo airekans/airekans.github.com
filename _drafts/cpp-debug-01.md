@@ -346,4 +346,124 @@ public:
 发现对于`App.h`和`Child.h`的包含顺序是反过来的。那么这两个头文件有什么玄机呢？
 我们看看`App.h`：
 
+    #include "Base.h"
+    #include "Child.h"
+
+嗯，在头文件的部分，是先include的`Base.h`，然后include的`Child.h`。那Child.h呢？
+
+    #include "Base1.h"
+    
+咦？`Child.h`竟然include了一个`Base1.h`？这是啥？跟`Base.h`有什么关系？
+我们来看看`Base.h`和`Base1.h`的diff：
+
+{% highlight diff %}
+--- Base.h	2014-03-17 23:19:05.980027339 +0800
++++ Base1.h	2014-03-17 23:19:05.980027339 +0800
+@@ -1,11 +1,10 @@
+ #ifndef _BASE_H_
+ #define _BASE_H_
+ 
+ class Base
+ {
+ protected:
+     unsigned u_data;
+-    unsigned m_data;
+ };
+ 
+ #endif
+{% endhighlight %}
+
+好嘛，`Base1.h`除了少了一个`m_data`之外，竟然其他都全部一样的！！
+这回真相大白了。
+
+# Bug分析
+
+为什么上面的`Base1.h`会导致bug呢？首先`Base1.h`和`Base.h`基本一样，连[include guard](http://en.wikipedia.org/wiki/Include_guard)都一样。
+然后我们看出问题的`Child.cpp`的include链是什么样子的(顺序按从左到右)：
+
+    Child.cpp
+       |     \
+    Child.h  App.h
+       |      |   \
+    Base1.h Base.h Child.h
+
+由于`Base1.h`和`Base.h`的include guard是一样的，所以由于`Base1.h`在`Base.h`之前include，
+所以只会include `Base1.h`，而`Base.h`的内容会直接被忽略。
+所以对于`Child.cpp`来说，整个`SuperChild`的继承体系是这样的(我把成员写在类名的后面)：
+
+    SuperChild []
+        |
+      Child [seq, data, i_data]
+        |
+      Base (in Base1.h) [u_data]
+
+好吧，那对于`main.cpp`来说呢？include链就会是下面的样子：
+
+      main.cpp
+       |     \
+     App.h    Child.h
+       |   \        \
+    Base.h Child.h  Base1.h
+
+这里因为`Base.h`在`Base1.h`的前面，所以`Base1.h`就直接被忽略了。
+所以从`main.cpp`的角度来看，`SuperChild`的继承体系就是这个样子：
+
+    SuperChild []
+        |
+      Child [seq, data, i_data]
+        |
+      Base (in Base.h) [u_data, m_data]
+
+看见了吧？从两个不同的编译单元来看，这个`SuperChild`的大小根本就是不一样的！
+最直接的原因就是`Base`被定义在两个不同的头文件，而且大小也不一样，
+导致了在`Child`的构造函数中，看见的`data`成员的偏移值和在`SuperChild`中看见的是不一样的。
+这就导致了我们说的这个bug。
+
+首先从`main.cpp`看见的`Child`类，我们看看他的内存布局：
+
+    起始地址    成员    类型   
+        0    | u_data | unsigned
+        4    | m_data | unsigned
+        8    |  seq   | unsigned
+        16   | data   | unsigned*
+        24   | i_data | int
+
+而对于`Child.cpp`看见的`Child`类，内存布局是下面这样的：
+
+    起始地址    成员    类型   
+        0    | u_data | unsigned
+        4    |  seq   | unsigned
+        8    | data   | unsigned*
+        16   | i_data | int
+
+所以在`Child`中的构造函数中赋值给`data`是会赋值到16这个偏移中的，
+而在`SuperChild`中取`data`，是会取到偏移8的，也就是对应到原来的`seq`的值。
+而我们在`SuperChild`给传的`seq`的初始值正正就是0。
+这终于解释了为什么在`SuperChild`的`data`的值总是0了。
+
+这真是非常愚蠢的bug啊……但是一般愚蠢的bug，都需要极其变态的debug过程才能找的出来……
+
+## 如何fix这个bug
+
+其实修复这个bug非常简单……只需要把`Child.h`中的`include "Base1.h"`改成`include "Base.h"`，
+也就是无论如何都用`Base.h`就好了。
+
+当然，这个bug的最主要的原因就是出现了`Base1.h`，这个很有可能是一个源文件的两个不同版本。
+这里就需要在用SCM的时候，更新的时候就直接修改源代码，不要copy一份，这样非常容易出问题……
+
+同时，注意到google的c++编程规范中，给出了一个[关于头文件的规定](http://google-styleguide.googlecode.com/svn/trunk/cppguide.xml#Names_and_Order_of_Includes)，
+其中有一个*隐含单没有明说*的规定，就是包含头文件的时候尽可能的不要用相对路径，
+而是直接从项目根目录一直写下来，比如`common/base.h`这样写，而不是`base.h`并加上`-I`的编译选项。
+这是在工程实践中非常重要的点，因为不用`-I`而是写全路径，可以加快编译速度，
+并且还可以最大程度的避免我遇到的这个bug。
+为什么这么说呢？因为如果出问题而相同的两个文件同名但在不同的目录下的话，
+如果在编译的时候利用`-I`选项是很可能在两个不同的编译单元包含了不同的头文件的。
+而如果用全路径的话，是完全不会出现这个bug。可以看到google的很多开源项目都是遵循这个规定的，
+比如protobuf。
+
+# 一个插曲
+
+不知道
+
+
 
