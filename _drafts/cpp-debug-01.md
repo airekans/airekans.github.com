@@ -277,6 +277,73 @@ mov    -0x18(%rbp),%rdx
 mov    %rdx,0x10(%rax)
 {% endhighlight %}
 
-第一行是载入`this`指针到`rax`寄存器，第二行
+第一行是载入`this`指针到`rax`寄存器，第二行是将`d`的值载入到`rdx`。
+所以第三行的就是将`d`的值赋给`data`成员。等等，咦？为什么`data`会是`0x10(%rax)`？
+上面在`SuperChild`里面，明明`data`是`0x8(%rax)`啊！怎么会相差了8的位移呢？
+
+为什么会位移不一样呢？是父类的size不对吗？怎么能够看见父类的size呢？
+
+# 模板静态断言
+
+为了能够判断一个类的大小，一般来说就使用`sizeof`来看了。比如说像下面这样：
+
+{% highlight cpp %}
+std::cout << sizeof(Base) << std::endl;
+{% endhighlight %}
+
+但是这得在运行期才能看得见，而我希望在编译的时候就能够看见，有没有什么办法呢？
+是有的，在C++中，能够利用一个模板技巧来达到静态断言的效果。
+先来看看怎么做。我在`Child`的构造函数中利用静态断言来断言`Base`的大小为8，
+因为在`Base.h`里面就是两个`unsigned`的大小嘛，而每个`unsigned`大小是4。
+所以就有了下面的代码：
+
+{% highlight cpp linenos=table %}
+template<unsigned size>
+class TestSize;
+
+template<>
+class TestSize<8> {};
+
+class Child : public Base
+{
+public:
+    Child(unsigned s, unsigned* d, int i)
+    {
+        TestSize<sizeof(Base)> test_size;
+        // ...
+    }
+{% endhighlight %}
+
+上面的代码关键的就是模版`TestSize`。他利用了模板的偏特化特性，特化了一个只对8有效的特化类。
+而其他的值是没有办法产生对象的，因为其他的值并没有具体的定义。
+而在`Child`的构造函数里面，我们用`sizeof(Base)`来作为模板参数，所以只有当`sizeof(Base)`为8的时候，
+编译才可以通过，也这就是静态断言的一种用法。
+(这种用法在["Modern C++ Design"](http://www.amazon.com/Modern-Design-Generic-Programming-Patterns/dp/0201704315)有详细的介绍)
+
+好吧，有了上面的断言，我们来编译一下：
+
+    g++ -g -c -o main.o main.cpp -I.
+    g++ -g -c -o Child.o Child.cpp -I.
+    In file included from Child.cpp:1:0:
+    Child.h: In constructor ‘Child::Child(unsigned int, unsigned int*, int)’:
+    Child.h:19:32: error: aggregate ‘TestSize<4u> test_size’ has incomplete type and cannot be defined
+    make: *** [Child.o] Error 1
+
+哦！真的在Child.cpp编译出现了错误，可以看见对于`Child.cpp`来说，`Base`竟然大小是4，而不是8！
+
+为什么会这样呢？明明`main.cpp`是没问题的，为什么`Child.cpp`却有问题呢？难道他们包含的`Base`不是同一个吗？
+
+我们仔细看看`main.cpp`的头文件包含：
+
+    #include "App.h"
+    #include "Child.h"
+
+然后我们再来看看`Child.cpp`的头文件包含：
+
+    #include "Child.h"
+    #include "App.h"
+
+发现对于`App.h`和`Child.h`的包含顺序是反过来的。那么这两个头文件有什么玄机呢？
+我们看看`App.h`：
 
 
