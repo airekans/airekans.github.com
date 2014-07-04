@@ -10,7 +10,7 @@ tags: [cpp, profile, gperftools]
 
 # 什么是perftools
 
-在Linux编程的世界里，性能调优一直是个让人头疼的事。最出名的`gprof`虽然大家都知道，
+在Linux的C/C++编程的世界里，性能调优一直是个让人头疼的事。最出名的`gprof`虽然大家都知道，
 其用法比较单一(只支持程序从启动到结束的profile)，而且对程序的运行时间会有比较大的影响，
 所以其profile不一定准确。
 
