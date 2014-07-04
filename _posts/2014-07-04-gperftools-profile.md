@@ -39,7 +39,7 @@ tags: [cpp, profile, gperftools]
 
     $ pprof --callgrind ./myprogram /tmp/profile > callgrind.res
 
-然后利用`kcachegrind`打开这个callgrind.res文件就可以看到类似下面的画面：
+然后利用`kcachegrind`打开这个callgrind.res文件就可以看到类似下面的画面(图片来自kcachegrind官网)：
 
 ![kcachegrind demo](http://kcachegrind.sourceforge.net/html/pics/KcgShot1.png)
 
