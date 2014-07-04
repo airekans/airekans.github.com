@@ -21,7 +21,7 @@ tags: [cpp, profile, gperftools]
 进行profile的，当时就被他简单的使用方法吸引。而最近维护的服务器也有性能问题，需要做性能调优。
 在尝试了多种原始的profile方式之后，我选择了`gperftools`。
 
-# 如何使用gperftools进行profile
+# 如何profile
 
 在gperftools的文档中，就简单的说了下面的方式来进行profile：
 
@@ -39,5 +39,41 @@ tags: [cpp, profile, gperftools]
 
     $ pprof --callgrind ./myprogram /tmp/profile > callgrind.res
 
+然后利用`kcachegrind`打开这个callgrind.res文件就可以看到类似下面的画面：
 
+![kcachegrind demo](http://kcachegrind.sourceforge.net/html/pics/KcgShot1.png)
 
+这样调优起来就非常直观了。而且这种方式的最大优点是非侵入式，也就是不需要改动一行代码就能够进行profile了。
+
+## 动态profile
+
+上面说到的方式是通过环境变量来触发profile，而跨度也是整个程序的生命周期。
+那如果是想要在程序运行的某段时间进行profile呢？如果我想在程序不结束的情况下就拿到profile的结果呢？
+
+这种情况下就需要用到动态profile的方式了。要实现这种方式，就需要改动程序的代码了，不过也比较简单：
+
+{% highlight cpp linenos=table %}
+#include <gperftools/profiler.h>
+
+int main()
+{
+    ProfilerStart("/tmp/profile");
+    some_func_to_profile();
+    ProfilerStop();
+    
+    return 0;
+}{% endhighlight %}
+
+没错，你只需要在你想要profile的函数的开头和结尾加上`ProfilerStart`和`ProfilerStop`调用就可以了。
+在`ProfilerStop`结束之后，profile的结果就会保存在`/tmp/profile`里面了。
+利用这种方式就可以在指定的时间点对程序进行profile了。
+
+最后需要说的一点是，gperftools的profile过程采用的是采样的方式，*而且对profile中的程序性能影响极小*，
+这对于在线或者离线profile都是一个极其重要的特点。
+
+# 对服务器进行profile
+
+对于后端程序员，每天都要和后台服务器打交道。而服务器的特点是长时间运行而不停止，
+在这种情况下要对程序进行profile就比较麻烦。
+
+在这我提供一种方式，使得profile服务器可以很方便，也可以按需profile
