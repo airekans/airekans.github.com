@@ -68,7 +68,7 @@ int main()
 在`ProfilerStop`结束之后，profile的结果就会保存在`/tmp/profile`里面了。
 利用这种方式就可以在指定的时间点对程序进行profile了。
 
-最后需要说的一点是，gperftools的profile过程采用的是采样的方式，*而且对profile中的程序性能影响极小*，
+最后需要说的一点是，gperftools的profile过程采用的是采样的方式，**而且对profile中的程序性能影响极小**，
 这对于在线或者离线profile都是一个极其重要的特点。
 
 # 对服务器进行profile
@@ -76,4 +76,47 @@ int main()
 对于后端程序员，每天都要和后台服务器打交道。而服务器的特点是长时间运行而不停止，
 在这种情况下要对程序进行profile就比较麻烦。
 
-在这我提供一种方式，使得profile服务器可以很方便，也可以按需profile
+在这我提供一种方式，使得profile服务器可以很方便，也可以按需profile。
+
+首先要注意的一点是，gperftools提供了两种链接方式——动态库和静态库。
+其中动态库链接的方式可以用环境变量和改动代码两种方式进行profile，而静态库只能使用改代码的方式。
+乍看起来好像是动态库库的方式比较方便，不过在陈硕的[《Linux多线程服务端编程》](http://book.douban.com/subject/20471211/)
+中就说过，对于服务器来说，静态编译的方式对于于动态链接有优势，并且部署上也比较方便。
+而我自己也是使用的静态链接的方式来使用gperftools的，所以以下假定都是用静态编译。
+
+对于服务器来说，一般的模式是事件循环，而我们也需要在某段时间之内进行profile。
+一个很直观的思路是在接受到某种请求的时候开始profile，而接受到另一种请求之后就结束。
+那我们就可以用类似下面的代码来实现：
+
+{% highlight cpp linenos=table %}
+#include <gperftools/profiler.h>
+
+void on_request(Request* req)
+{
+    static bool is_profile_started = false;
+    if (req->type == START_PROFILE && !is_profile_started)
+    {
+        ProfilerStart("/tmp/profile");
+        is_profile_started = true;
+    }
+    else if (req->type == STOP_PROFILE && is_profile_started)
+    {
+        ProfilerStop();
+        is_profile_started = false;
+    }
+    else
+    {
+        // normal request processing here
+    }
+}{% endhighlight %}
+
+利用来面的代码，我们可以在想要profile的时间段内分别向服务器发送特殊的请求，
+这样就可以在不停止服务器的情况下，对服务器进行profile。
+
+当然这种方式会产生安全问题，在有外网请求的服务器上是不能这么用的。
+而且gperftools的文档上也说明了，在线上的服务器最好是不要开启profile，而对测试服务器用就好了。
+
+# 总结
+
+gperftools对于Linux下的服务器profile进行了很大的简化。能够在不改代码或者改极少代码并且
+不增加太多的依赖的情况下，对服务器进行在线profile。有了gperftools，Linux程序员的生活可以又轻松一些了！
