@@ -118,7 +118,26 @@ public:
 template<typename _CharT, typename _Traits, typename _Alloc>
 class basic_string
 {
-public:
-    mutable _Alloc_hider      _M_dataplus;
+private:
+    struct _Alloc_hider : _Alloc // Use ebo
+    {
+        _CharT* _M_p; // The actual data.
+    };
 };{% endhighlight %}
 
+`_Alloc_hider`继承于模板参数类`_Alloc`(并且还是私有继承)，还有一个自己的成员`_M_p`。
+`_M_p`是用来存放实际数据的，而`_Alloc`呢？熟悉STL的人可能还记得STL里面有一个allocator。
+这个allocator一般的实现都是没有任何的数据成员，只有static函数的。
+所以这个类是一个空类。
+默认的string就是将这个allocator当作模板参数传递到`_Alloc`。
+所以`_Alloc`大多数情况下都是空类，而string经常会在程序中用到，
+还很经常会大量的使用，比如在容器中，这个时候就需要考虑内存占用了。
+所以在这里就是用了ebo的优化。
+
+可能会有人会问，`string`里面实际上只有`char*`，但是不是说`string`还记录了size，
+还用到了*copy on write*技术的吗？那怎么只有一个`char*`呢？
+这个和`string`的实现中的内存布局相关，我会专门写一篇文章解析一下，先在这里挖个坑 :)
+
+# cpp-btree中的ebo
+
+123
