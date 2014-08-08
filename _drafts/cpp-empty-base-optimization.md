@@ -98,3 +98,27 @@ int main()
 下面我们来看看这两个现实中的例子。
 
 # STL中的string
+
+C++每天都用的string中就用到了ebo。我们来看看string是如何定义成员的(省略函数定义，以下代码源自gcc 4.1.2 c++)：
+
+{% highlight cpp %}
+template<typename _CharT, typename _Traits, typename _Alloc>
+class basic_string
+{
+public:
+    mutable _Alloc_hider      _M_dataplus;
+};{% endhighlight %}
+
+注意`string`实际上是模板类`basic_string`的一个特化类。而`basic_string`只包含了一个成员`_M_dataplus`，
+其类型为`_Alloc_hider`。
+
+我们来看看`_Alloc_hider`是怎么定义：
+
+{% highlight cpp %}
+template<typename _CharT, typename _Traits, typename _Alloc>
+class basic_string
+{
+public:
+    mutable _Alloc_hider      _M_dataplus;
+};{% endhighlight %}
+
