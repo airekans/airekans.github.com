@@ -1,6 +1,15 @@
-# C++中的Empty Base Optimization
+---
+layout: post
+title: "C++中的Empty Base Optimization"
+description: "本文介绍C++中的Empty Base Optimization，并用两个例子介绍他的使用方法。"
+category: cpp
+tags: [cpp]
+---
+{% include JB/setup %}
 
-说到Empty Base Optimization(简称ebo)可能大家还是比较陌生，但是C++中每天都在用的`std::string`中就用到了ebo。
+# 什么是Empty Base Optimization？
+
+说到C++中的Empty Base Optimization(简称ebo)可能大家还是比较陌生，但是C++中每天都在用的`std::string`中就用到了ebo。
 
 那么到底什么是ebo呢？
 其实ebo就是当一个类的对象理想内存占用可以为0的时候，把这个类的对象作为另一个类的成员时，把其内存占用变为0的一种优化方法。
@@ -178,3 +187,42 @@ private:
 所以一般情况下，`Base`也是一个空类。
 
 这里`btree`也利用了ebo节省了内存占用。
+
+# 一个例外
+
+在编译器判断是否做ebo的时候，有这么一个例外，就是虽然继承于一个空类，
+但是子类的第一个非static成员的类型也是这个空类或者是这个类的一个子类。
+在这种情况下，编译器是不会做ebo的。
+
+有点绕，我们看看下面的代码就明白了：
+
+{% highlight cpp %}
+#include <iostream>
+using namespace std;
+
+class Base
+{};
+
+class TestCls : public Base
+{
+public:
+    Base m_obj; // <<<<
+    int m_num;
+};
+
+int main()
+{
+    cout << "sizeof(Base) " << sizeof(Base) << endl;
+    cout << "sizeof(TestCls) " << sizeof(TestCls) << endl;
+
+    TestCls obj;
+
+    cout << "addr obj " << (void*) &obj << endl;
+    cout << "addr obj.m_obj " << (void*) &(obj.m_obj) << endl;
+    cout << "addr obj.m_num " << (void*) &(obj.m_num) << endl;
+
+    return 0;
+}{% endhighlight %}
+
+运行一下上面的代码，你会看到，`TestCls`的size是8，并且`obj`的地址和`obj.m_obj`的地址并不一样。
+这说明了ebo并没有进行。
