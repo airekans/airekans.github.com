@@ -59,3 +59,42 @@ int main()
 总之答案不会是4。
 
 但是在内存非常紧张的情况下，还真的会想要让`TestCls`的size是4。有办法吗？
+这里就可以用到今天介绍的`ebo`了，看下面的代码：
+
+{% highlight cpp %}
+class TestCls : public Base
+{
+    int m_num;
+};
+
+int main()
+{
+    cout << "sizeof(TestCls) " << sizeof(TestCls) << endl;
+    return 0;
+}{% endhighlight %}
+
+这次能猜到输出是多少吗？没错，就是我们想要的4！
+当我们把空的类作为基类的时候，编译器就会把这个基类的size去掉，做了优化，
+从而使得整个对象占有真正需要的size。
+
+那么如果这个子类除了基类之外，没有别的成员呢？如下面：
+
+{% highlight cpp %}
+class TestCls : public Base
+{};
+
+int main()
+{
+    cout << "sizeof(TestCls) " << sizeof(TestCls) << endl;
+    return 0;
+}{% endhighlight %}
+
+上面的代码输出仍然是1，因为如果这个类本身除了空基类之外没别的成员，
+说明这个类本身也是一个空类，所以最开始说的情况就适用于这里。
+编译器就给空类给了1的size。
+
+上面说的就是Empty Base Optimization了。那么现实中哪里使用到了这个技巧呢？
+除了最开始提到的`std::string`之外，Google的[cpp-btree](https://code.google.com/p/cpp-btree/)也用到了这个技巧。
+下面我们来看看这两个现实中的例子。
+
+# STL中的string
