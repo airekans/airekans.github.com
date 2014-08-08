@@ -140,4 +140,41 @@ private:
 
 # cpp-btree中的ebo
 
-123
+[cpp-btree](https://code.google.com/p/cpp-btree/)是Google出的一个基于B树的模板容器类库。如果有不熟悉B树的童鞋，可以移步[这里](https://www.cs.usfca.edu/~galles/visualization/BTree.html)
+看一看这个数据结构的动画演示。
+
+B树是一种平衡树结构，一般常用于数据库的磁盘文件数据结构(不过一般会用其变体B+树)。而cpp-btree则是全内存的，和`std::map`类似的一种容器实现，其对于大量元素(>100w)的存取效率要高于`std::map`的红黑树实现，并且还节省内存。
+
+关于cpp-btree的广告就卖到这里，我们看看他哪里使用了ebo。
+在cpp-btree里面提供了`btree_set`和`btree_map`两个容器类，
+而他们的公共实现都在`btree`这个类里面。
+`btree`这个类实现了主要的B树的功能，而其成员定义如下：
+
+{% highlight cpp %}
+template <typename Params>
+class btree : public Params::key_compare {
+private:
+  typedef typename Params::allocator_type allocator_type;
+  typedef typename allocator_type::template rebind<char>::other
+    internal_allocator_type;
+
+  template <typename Base, typename Data>
+  struct empty_base_handle : public Base {
+    empty_base_handle(const Base &b, const Data &d)
+        : Base(b),
+          data(d) {
+    }
+    Data data;
+  };
+
+  empty_base_handle<internal_allocator_type, node_type*> root_;
+};{% endhighlight %}
+
+可以看见`btree`这个类里面只包含了`root_`这一个成员，其类型为`empty_base_handle`。
+`empty_base_handle`是一个继承于Base的类，在这里，
+`Base`特化成`internal_allocator_type`。
+从名字可以看出`internal_allocator_type`是一个allocator，
+而在默认的`btree_map`实现中，这个allocator就是`std::allocator`。
+所以一般情况下，`Base`也是一个空类。
+
+这里`btree`也利用了ebo节省了内存占用。
