@@ -65,5 +65,5 @@ msg.ParseFromIstream(&ifs);
 看到这里涉及到的`CodedOutputStream`，其是对`ZeroCopyOutputStream`的一层封装，
 用来将一个Message格式化的输出到`ZeroCopyOutputStream`。
 其中`CodedOutputStream`封装了PB的二进制编码格式，如果对PB的编码有兴趣的话，
-可以自行移步[官方的encoding文档]进行了解，这里就不展开了。
+可以自行移步[官方的encoding文档](https://developers.google.com/protocol-buffers/docs/encoding)进行了解，这里就不展开了。
 
