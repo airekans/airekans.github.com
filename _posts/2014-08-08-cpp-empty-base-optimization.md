@@ -145,7 +145,8 @@ private:
 
 可能会有人会问，`string`里面实际上只有`char*`，但是不是说`string`还记录了size，
 还用到了*copy on write*技术的吗？那怎么只有一个`char*`呢？
-这个和`string`的实现中的内存布局相关，我会专门写一篇文章解析一下，先在这里挖个坑 :)
+这个和`string`的实现中的内存布局相关，其中Copy on write是g++的stl中实现的策略，
+想要了解g++的string的内存布局，可以看看[陈硕的这篇文章](http://blog.csdn.net/solstice/article/details/7364406)。
 
 # cpp-btree中的ebo
 
