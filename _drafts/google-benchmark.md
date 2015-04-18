@@ -3,13 +3,14 @@
 
 比如我写了下面这个从`int`到`string`的转换程序：
 
-    string uint2str(unsigned int num)
-    {
-        ostringstream oss;
-        oss << num;
-        return oss.str();
-    }
-
+```cpp
+string uint2str(unsigned int num)
+{
+    ostringstream oss;
+    oss << num;
+    return oss.str();
+}
+```
 
     
     
