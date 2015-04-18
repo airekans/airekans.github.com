@@ -1,3 +1,12 @@
+---
+layout: post
+title: "Google benchmark：一个简单易容的C++ benchmark库"
+description: "这篇文章介绍了Google的benchmark库，一个简单易用的C++库，相对于自己手写这些架子代码来说，做benchmark要简化很多。"
+category: cpp
+tags: [cpp, benchmark]
+---
+{% include JB/setup %}
+
 在写C++程序的时候，经常需要对某些函数或者某些类的方法进行benchmark。一般来说，我们可以写一些简单的程序来进行测试，
 然后跑一定的次数(比如10w次)，看看跑了多久。
 
