@@ -12,26 +12,24 @@ tags: [cpp, benchmark]
 
 比如我写了下面这个从`int`到`string`的转换程序：
 
-```cpp
+{% highlight cpp linenos=table %}
 string uint2str(unsigned int num)
 {
     ostringstream oss;
     oss << num;
     return oss.str();
-}
-```
+}{% endhighlight %}
 
 那么我们可以写下面这个程序：
 
-```cpp
+{% highlight cpp linenos=table %}
 int main()
 {
     for (int i = 0; i < 1000000; ++i) {
         (void) uint2str(i);
     }
     return 0;
-}
-```
+}{% endhighlight %}
 
 然后在命令用time跑，看看跑了多少时间，但是这样做有一个问题，如果我们需要和另外一个函数做比较，
 则main函数需要写一个分支来跑这个函数，或者干脆重新写一个程序。另外如果我们需要比较在不同的数据规模下函数会跑多快，
@@ -53,7 +51,7 @@ int main()
 首先我们把benchmark下载下来，然后用cmake进行编译。然后我们在c++里面写下面的代码：
 
 
-```cpp
+{% highlight cpp linenos=table %}
 #include <benchmark/benchmark.h>
 
 static void BM_uint2str(benchmark::State& state) {
@@ -64,8 +62,7 @@ static void BM_uint2str(benchmark::State& state) {
 // Register the function as a benchmark
 BENCHMARK(BM_uint2str);
 
-BENCHMARK_MAIN();
-```
+BENCHMARK_MAIN();{% endhighlight %}
 
 有了上面的程序，然后编译链接，就可以直接跑了。需要注意在链接的时候要把`-lpthread`也加上，否则可能会有runtime exception。
 跑这个程序，会有下面的输出：
@@ -86,19 +83,18 @@ BENCHMARK_MAIN();
 
 假设我们写了下面的函数:
 
-```cpp
+{% highlight cpp linenos=table %}
 void vuint2vstr(const vector<unsigned int>& vint, vector<string>& vstr) {
     vstr.clear();
     for (std::size_t i = 0; i < vint.size(); ++i) {
         vstr.push_back(uint2str(vint[i]));
     }
-}
-```
+}{% endhighlight %}
 
 我们可以用类似之前提到的方法来写benchmark，但是如果我想从不同的vector大小来测试上面的函数的性能呢？
 直接用Range函数就可以了：
 
-```cpp
+{% highlight cpp linenos=table %}
 static void BM_vuint2vstr(benchmark::State& state) {
     vector<unsigned int> vuint;
     for (std::size_t i = 0; i < state.range_x(); ++i) {
@@ -112,8 +108,7 @@ static void BM_vuint2vstr(benchmark::State& state) {
 // Register the function as a benchmark
 BENCHMARK(BM_vuint2vstr)->Range(8, 8 << 10);
 
-BENCHMARK_MAIN();
-```
+BENCHMARK_MAIN();{% endhighlight %}
 
 对！就是直接在`BENCHMARK`宏后面加上Range就可以了！第一个参数是起始值，第二个参数是终止值。
 而在benchmark里面通过`state.range_x()`来获取实际的值。
