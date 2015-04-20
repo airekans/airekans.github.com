@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Google benchmark：一个简单易容的C++ benchmark库"
+title: "Google benchmark：一个简单易用的C++ benchmark库"
 description: "这篇文章介绍了Google的benchmark库，一个简单易用的C++库，相对于自己手写这些架子代码来说，做benchmark要简化很多。"
 category: cpp
 tags: [cpp, benchmark]
