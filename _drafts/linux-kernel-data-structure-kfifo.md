@@ -144,5 +144,42 @@ unsigned int __kfifo_get(struct kfifo *fifo,
 
 那是不是这样就线程安全了呢？并不是。
 
-还记得之前忽略掉的那些memory barrier吗？如果没有了那些barrier的话，代码仍然是不安全的。
+还记得之前忽略掉的那些memory barrier吗？如果没有了那些barrier的话，代码仍然是不安全的。应该在多线程里面，我们不单只需要确保原子性，还需要保证不会有乱序(可见性)。而在没有锁或者memory barrier的情况下，没有办法保证在所有CPU上都不会出现乱序。而上面代码里面的memory barrier就是为了确保不出现乱序而加入的。
 
+简单介绍一下这几个memory barrier的作用：
+
+1. `smp_rmb`保证读操作之间不会出现乱序
+2. `smp_wmb`保证写操作之间不会出现乱序
+3. `smp_mb`保证读写操作都不会出现乱序
+
+
+接着我们可以把kfifo里面对`in`、`out`和`buffer`的读写操作归类一下，那么`__kfifo_put`的是下面这样：
+
+1. R(in), R(out)
+2. R(in), W(buffer)
+3. W(in)
+
+而`__kfifo_get`则是下面这样：
+
+1. R(in), R(out)
+2. R(out), R(buffer)
+3. W(out)
+
+我们先来看`__kfifo_put`，有几个内存操作是不可以出现乱序的：
+1. R(out)和W(buffer)：因为我们需要知道`out`的最新值，否则可能出现明明有队列有空间，但是我们仍写不进去数据的情况。这里因为是要保证读写操作之间的顺序，所以需要用`smp_mb`。
+2. W(buffer)和W(in)：这个顺序是必须要保证的，否则可能我们更新了`in`之后，这个时候buffer的内容其实并没有copy进去，但是这时候来了一个`__kfifo_get`，就把内容拷贝出去了，这个是不允许的。所以这里我们需要用`smp_wmb`。
+
+我们可以用下面这个图来表示`kfifo`在put的时候的状态：
+
+![kfifo_put states](https://cloud.githubusercontent.com/assets/1321283/10421549/b85f24bc-70dc-11e5-9afd-2ec2f659422f.png)
+
+类似的，`__kfifo_get`也有几个内存操作不可以乱序：
+
+1. R(in)和R(buffer)：我们需要获取最新的`in`值，否则可能会出现明明队列有内容，但是我们却读不到。这里需要用`smp_rmb`。
+2. R(buffer)和W(out)：这个顺序也是必须保证的，因为如果我们在读buffer之前就更新的out的话，则可能出现正要读buffer之前，该内容已经被`__kfifo_put`覆盖了，则读出来并不是我们想要的内容。这里需要用`smp_mb`。
+
+`kfifo`在get的时候的状态可以用下面的图来表示：
+
+![kfifo_get states](https://cloud.githubusercontent.com/assets/1321283/10421609/6059015a-70de-11e5-8dac-b5805e194da9.png)
+
+所以有了上面kfifo的实现，也就有了一个非常高效的单读单写队列。当然如果是在其他的多线程场景，我们仍然需要用spinlock来保护`kfifo`。
