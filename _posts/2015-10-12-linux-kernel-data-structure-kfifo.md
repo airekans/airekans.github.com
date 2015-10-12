@@ -25,21 +25,21 @@ kfifo主要定义在`include/linux/kfifo.h`里面：
 {% highlight c linenos=table %}
 struct kfifo {
 	unsigned char *buffer;	/* the buffer holding the data */
-	unsigned int size;	/* the size of the allocated buffer */
-	unsigned int in;	/* data is added at offset (in % size) */
-	unsigned int out;	/* data is extracted from off. (out % size) */
-	spinlock_t *lock;	/* protects concurrent modifications */
+	unsigned int size;  /* the size of the allocated buffer */
+	unsigned int in;  /* data is added at offset (in % size) */
+	unsigned int out;  /* data is extracted from off. (out % size) */
+	spinlock_t *lock;  /* protects concurrent modifications */
 };
 
 extern struct kfifo *kfifo_init(unsigned char *buffer, unsigned int size,
-				gfp_t gfp_mask, spinlock_t *lock);
+    gfp_t gfp_mask, spinlock_t *lock);
 extern struct kfifo *kfifo_alloc(unsigned int size, gfp_t gfp_mask,
-				 spinlock_t *lock);
+    spinlock_t *lock);
 extern void kfifo_free(struct kfifo *fifo);
 extern unsigned int __kfifo_put(struct kfifo *fifo,
-				const unsigned char *buffer, unsigned int len);
+    const unsigned char *buffer, unsigned int len);
 extern unsigned int __kfifo_get(struct kfifo *fifo,
-				unsigned char *buffer, unsigned int len);{% endhighlight %}
+    unsigned char *buffer, unsigned int len);{% endhighlight %}
 
 可以看到在kfifo本身的定义里面，有一个`spinlock_t`，这是用来在多线程同时修改队列的时候加锁的。而其余的成员就很明显了，是用来表示队列的当前状态的。队列本身的内容存储在`buffer`里面。
 
