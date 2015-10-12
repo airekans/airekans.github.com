@@ -9,6 +9,8 @@
 
 `kfifo`有一个重要的特性，就是当使用场景是单写单读的情况下，不需要加锁，所以在这种情况下的性能较高。
 
+本文中的所有代码均来自linux kernel 2.6.32，所以License也是GPLv2的。
+
 # 定义及API
 
 kfifo主要定义在`include/linux/kfifo.h`里面：
