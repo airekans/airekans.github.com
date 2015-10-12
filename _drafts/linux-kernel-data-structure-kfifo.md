@@ -185,3 +185,19 @@ unsigned int __kfifo_get(struct kfifo *fifo,
 ![kfifo_get states](https://cloud.githubusercontent.com/assets/1321283/10421609/6059015a-70de-11e5-8dac-b5805e194da9.png)
 
 所以有了上面kfifo的实现，也就有了一个非常高效的单读单写队列。当然如果是在其他的多线程场景，我们仍然需要用spinlock来保护`kfifo`。
+
+# 性能比较
+
+我建了一个repo([kfifo-benchmark](https://github.com/airekans/kfifo-benchmark))来简单地比较了一下kfifo的性能。
+我把kfifo port到了user space，同时简单地把`spinlock_t`替换成了`pthread_mutex_t`(`pthread_spinlock_t`默认并不在pthread，需要另外配置)。
+
+比较里面的三个case(可以自行到`main.cc`里面去看)及性能如下(我用的是real time/wall time，所以时间越短表示越快)：
+
+1. 使用`__kfifo_put`和`__kfifo_get`的单读单写(无锁)：0m3.496s
+2. 使用`kfifo_put`和`kfifo_get`的单读单写场景(mutex)：0m13.291s
+3. 使用tpool里面的`BoundedBlockingQueue`默认特化的单读单写场景(mutex+condition variable)：0m17.791s
+
+可以看出来，在单读单写场景下，kfifo的无锁版比加锁版本要快3.8x。而就算是kfifo的加锁版本，也比tpool中的`BoundedBlockingQueue`要快33%。
+
+
+
