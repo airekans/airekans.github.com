@@ -1,4 +1,11 @@
-# Linux内核中的队列 kfifo
+---
+layout: post
+title: "Linux内核中的队列 kfifo"
+description: "kfifo是一个Linux内核中非常轻量级但是非常高效的FIFO队列实现。本文详细解析了其实现原理。"
+category: c
+tags: [c, cpp, linux kernel]
+---
+{% include JB/setup %}
 
 在内核中经常会有需要用到队列来传递数据的时候，而在内核中就有一个轻量而且实现非常巧妙的队列实现——kfifo。
 简单来说kfifo是一个有限定大小的环形buffer，借用网络上的一个图片来说明一下是最清楚的：
