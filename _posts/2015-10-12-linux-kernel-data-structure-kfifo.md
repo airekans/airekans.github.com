@@ -7,7 +7,7 @@ tags: [c, cpp, linux kernel]
 ---
 {% include JB/setup %}
 
-在内核中经常会有需要用到队列来传递数据的时候，而在内核中就有一个轻量而且实现非常巧妙的队列实现——kfifo。
+在内核中经常会有需要用到队列来传递数据的时候，而在Linux内核中就有一个轻量而且实现非常巧妙的队列实现——kfifo。
 简单来说kfifo是一个有限定大小的环形buffer，借用网络上的一个图片来说明一下是最清楚的：
 
 ![kfifo-diagram](http://blog.chinaunix.net/attachment/201404/10/18770639_1397093507W9w9.bmp)
@@ -150,7 +150,7 @@ unsigned int __kfifo_get(struct kfifo *fifo,
 
 那是不是这样就线程安全了呢？并不是。
 
-还记得之前忽略掉的那些memory barrier吗？如果没有了那些barrier的话，代码仍然是不安全的。应该在多线程里面，我们不单只需要确保原子性，还需要保证不会有乱序(可见性)。而在没有锁或者memory barrier的情况下，没有办法保证在所有CPU上都不会出现乱序。而上面代码里面的memory barrier就是为了确保不出现乱序而加入的。
+还记得之前忽略掉的那些memory barrier吗？如果没有了那些barrier的话，代码仍然是不安全的。因为在多线程里面，我们不单只需要确保原子性，还需要保证不会有乱序(可见性)。而在没有锁或者memory barrier的情况下，没有办法保证在所有CPU上都不会出现乱序。而上面代码里面的memory barrier就是为了确保不出现乱序而加入的。
 
 简单介绍一下这几个memory barrier的作用：
 
