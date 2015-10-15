@@ -195,7 +195,7 @@ unsigned int __kfifo_get(struct kfifo *fifo,
 我建了一个repo([kfifo-benchmark](https://github.com/airekans/kfifo-benchmark))来简单地比较了一下kfifo的性能。
 我把kfifo port到了user space，同时简单地把`spinlock_t`替换成了`pthread_mutex_t`(`pthread_spinlock_t`默认并不在pthread，需要另外配置)。
 
-比较里面的三个case(可以自行到`main.cc`里面去看)及性能如下(我用的是real time/wall time，所以时间越短表示越快)：
+比较里面的三个case(可以自行到[main.cc](https://github.com/airekans/kfifo-benchmark/blob/master/main.cc)里面去看)及性能如下(我用的是real time/wall time，所以时间越短表示越快)：
 
 1. 使用`__kfifo_put`和`__kfifo_get`的单读单写(无锁)：0m3.496s
 2. 使用`kfifo_put`和`kfifo_get`的单读单写场景(mutex)：0m13.291s
