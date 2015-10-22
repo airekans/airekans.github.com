@@ -14,7 +14,7 @@ tags: [c, cpp, linux kernel]
 
 `kfifo`本身并没有队列元素的概念，其内部只是一个buffer。在使用的时候需要用户知道其内部存储的内容，所以最好是用来存储定长对象。
 
-`kfifo`有一个重要的特性，就是当使用场景是单写单读的情况下，不需要加锁，所以在这种情况下的性能较高。
+`kfifo`有一个重要的特性，就是当使用场景是单生产者单消费者(1 Producer 1 Consumer，以下简称1P1C)的情况下，不需要加锁，所以在这种情况下的性能较高。
 
 本文中的所有代码均来自linux kernel 2.6.32，所以License也是GPLv2的。
 
@@ -46,7 +46,7 @@ extern unsigned int __kfifo_get(struct kfifo *fifo,
 需要注意的是，kfifo要求队列的size是2的幂(2^n)，这样在后面操作的时候求余操作可以通过与运算来完成，从而更高效。
 
 初始化通过`kfifo_init`和`kfifo_alloc`完成。而对于队列操作的主要函数的是`kfifo_put`和`kfifo_get`。这两个函数会先加锁，然后调用`__kfifo_put`或者`__kfifo_get`。也就是说真正的逻辑是实现在这两个函数里。
-之前也说过`kfifo`在单读单写的情况下是不需要加锁的，所以这里我们会着重看看这两个函数。
+之前也说过`kfifo`在1P1C的情况下是不需要加锁的，所以这里我们会着重看看这两个函数。
 
 # 入队
 
@@ -82,7 +82,7 @@ unsigned int __kfifo_put(struct kfifo *fifo,
 	return len;
 }{% endhighlight %}
 
-可以看到里面加了一些memory barrier来确保单读单写场景的正确，这里我们可以暂时忽略。
+可以看到里面加了一些memory barrier来确保1P1C场景的正确，这里我们可以暂时忽略。
 
 主要的步骤如下：
 
@@ -144,7 +144,7 @@ unsigned int __kfifo_get(struct kfifo *fifo,
 
 # 多线程互斥
 
-这里我们只考虑最简单的多线程场景——单读单写。如果我们只用一个`len`来表示队列长度的话，那么看看`__kfifo_put`和`__kfifo_get`里面对这个变量都需要做修改，而且一个是`+=`操作，一个是`-=`。如果在不加锁的情况下，这两个操作并不是原子操作，所以如果只用一个`len`，我们必须用锁来保护，无论是多么简单的多线程场景。
+这里我们只考虑最简单的多线程场景——1P1C。如果我们只用一个`len`来表示队列长度的话，那么看看`__kfifo_put`和`__kfifo_get`里面对这个变量都需要做修改，而且一个是`+=`操作，一个是`-=`。如果在不加锁的情况下，这两个操作并不是原子操作，所以如果只用一个`len`，我们必须用锁来保护，无论是多么简单的多线程场景。
 
 如果我们用`in`和`out`来表示队列的读边界和写边界的话，那么队列的长度可以用`in - out`来表示。而且就像我们看到的那样，`in`只会在`__kfifo_put`里面修改，而`out`也只会在`__kfifo_get`里面修改，所以无论是`in`或`out`都只会有一个线程修改，所以不会有互斥的问题。
 
@@ -172,7 +172,7 @@ unsigned int __kfifo_get(struct kfifo *fifo,
 3. W(out)
 
 我们先来看`__kfifo_put`，有几个内存操作是不可以出现乱序的：
-1. R(out)和W(buffer)：因为我们需要知道`out`的最新值，否则可能出现明明有队列有空间，但是我们仍写不进去数据的情况。这里因为是要保证读写操作之间的顺序，所以需要用`smp_mb`。
+1. R(out)和W(buffer)：因为我们需要知道`out`的最新值，否则可能出现明明有队列有空间，但是我们仍写不进去数据的情况。这里因为是要保证读写操作之间的顺序，所以需要用`smp_mb`。实际上在x86/64平台，连这个barrier也可以忽略，因为在x86上面，读后写是保证不会乱序的，不过Linux内核由于需要保证各个平台都能work，所以仍然需要这里加上。
 2. W(buffer)和W(in)：这个顺序是必须要保证的，否则可能我们更新了`in`之后，这个时候buffer的内容其实并没有copy进去，但是这时候来了一个`__kfifo_get`，就把内容拷贝出去了，这个是不允许的。所以这里我们需要用`smp_wmb`。
 
 我们可以用下面这个图来表示`kfifo`在put的时候的状态：
@@ -188,7 +188,7 @@ unsigned int __kfifo_get(struct kfifo *fifo,
 
 ![kfifo_get states](https://cloud.githubusercontent.com/assets/1321283/10421609/6059015a-70de-11e5-8dac-b5805e194da9.png)
 
-所以有了上面kfifo的实现，也就有了一个非常高效的单读单写队列。当然如果是在其他的多线程场景，我们仍然需要用spinlock来保护`kfifo`。
+所以有了上面kfifo的实现，也就有了一个非常高效的1P1C队列。当然如果是在其他的多线程场景，我们仍然需要用spinlock来保护`kfifo`。
 
 # 性能比较
 
@@ -197,11 +197,11 @@ unsigned int __kfifo_get(struct kfifo *fifo,
 
 比较里面的三个case(可以自行到[main.cc](https://github.com/airekans/kfifo-benchmark/blob/master/main.cc)里面去看)及性能如下(我用的是real time/wall time，所以时间越短表示越快)：
 
-1. 使用`__kfifo_put`和`__kfifo_get`的单读单写(无锁)：0m3.496s
-2. 使用`kfifo_put`和`kfifo_get`的单读单写场景(mutex)：0m13.291s
-3. 使用tpool里面的`BoundedBlockingQueue`默认特化的单读单写场景(mutex+condition variable)：0m17.791s
+1. 使用`__kfifo_put`和`__kfifo_get`的1P1C(无锁)：0m3.496s
+2. 使用`kfifo_put`和`kfifo_get`的1P1C场景(mutex)：0m13.291s
+3. 使用tpool里面的`BoundedBlockingQueue`默认特化的1P1C场景(mutex+condition variable)：0m17.791s
 
-可以看出来，在单读单写场景下，kfifo的无锁版比加锁版本要快3.8x。而就算是kfifo的加锁版本，也比tpool中的`BoundedBlockingQueue`要快33%。
+可以看出来，在1P1C场景下，kfifo的无锁版比加锁版本要快3.8x。而就算是kfifo的加锁版本，也比tpool中的`BoundedBlockingQueue`要快33%。
 
 
 
