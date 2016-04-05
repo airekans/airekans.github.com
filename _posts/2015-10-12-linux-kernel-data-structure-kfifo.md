@@ -22,7 +22,7 @@ tags: [c, cpp, linux kernel]
 
 kfifo主要定义在`include/linux/kfifo.h`里面：
 
-{% highlight c linenos=table %}
+``` c
 struct kfifo {
   unsigned char *buffer;	/* the buffer holding the data */
   unsigned int size;  /* the size of the allocated buffer */
@@ -41,7 +41,8 @@ extern void kfifo_free(struct kfifo *fifo);
 extern unsigned int __kfifo_put(struct kfifo *fifo,
     const unsigned char *buffer, unsigned int len);
 extern unsigned int __kfifo_get(struct kfifo *fifo,
-    unsigned char *buffer, unsigned int len);{% endhighlight %}
+    unsigned char *buffer, unsigned int len);
+```
 
 可以看到在kfifo本身的定义里面，有一个`spinlock_t`，这是用来在多线程同时修改队列的时候加锁的。而其余的成员就很明显了，是用来表示队列的当前状态的。队列本身的内容存储在`buffer`里面。
 
@@ -54,7 +55,7 @@ extern unsigned int __kfifo_get(struct kfifo *fifo,
 
 `__kfifo_put`的定义很短：
 
-{% highlight c linenos=table %}
+``` c
 unsigned int __kfifo_put(struct kfifo *fifo,
   const unsigned char *buffer, unsigned int len)
 {
@@ -82,7 +83,8 @@ unsigned int __kfifo_put(struct kfifo *fifo,
   fifo->in += len;
 
   return len;
-}{% endhighlight %}
+}
+```
 
 可以看到里面加了一些memory barrier来确保1P1C场景的正确，这里我们可以暂时忽略。
 
@@ -102,7 +104,7 @@ unsigned int __kfifo_put(struct kfifo *fifo,
 
 `__kfifo_get`的定义和`__kfifo_put`长度差不多：
 
-{% highlight c linenos=table %}
+``` c
 unsigned int __kfifo_get(struct kfifo *fifo,
   unsigned char *buffer, unsigned int len)
 {
@@ -130,7 +132,8 @@ unsigned int __kfifo_get(struct kfifo *fifo,
   fifo->out += len;
 
   return len;
-}{% endhighlight %}
+}
+```
 
 忽略掉memory barrier之后，主要步骤如下：
 
