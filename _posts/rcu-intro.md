@@ -1,6 +1,12 @@
-# Read-Copy Update，向无锁编程进发！
 
-----
+---
+layout: post
+title: "Read-Copy Update，向无锁编程进发！"
+description: "本文会首先简略介绍RCU的基本概念，然后通过例子来详细阐述RCU的读写概念，最后简单介绍RCU目前的实现方案。"
+category: c
+tags: [c, cpp, linux kernel, lockfree, rcu]
+---
+{% include JB/setup %}
 
 在无锁编程的世界里，ABA问题是一个没有办法回避的实现问题。就看看实现一个最简单的[基于单链表的stack都有这么多的坑][1]，就知道无锁编程有多难。
 难道我们追求高性能的道路就被这个拦路虎挡住了？
