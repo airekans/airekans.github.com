@@ -120,24 +120,24 @@ static CDS_LIST_HEAD(registry);
 static pthread_mutex_t rcu_registry_lock = PTHREAD_MUTEX_INITIALIZER;
 
 void rcu_register_thread(void) {
-	URCU_TLS(rcu_reader).tid = pthread_self();
-	assert(URCU_TLS(rcu_reader).ctr == 0);
+    URCU_TLS(rcu_reader).tid = pthread_self();
+    assert(URCU_TLS(rcu_reader).ctr == 0);
 
-	mutex_lock(&rcu_registry_lock);
-	assert(!URCU_TLS(rcu_reader).registered);
-	URCU_TLS(rcu_reader).registered = 1;
-	cds_list_add(&URCU_TLS(rcu_reader).node, &registry);
-	mutex_unlock(&rcu_registry_lock);
-	_rcu_thread_online();
+    mutex_lock(&rcu_registry_lock);
+    assert(!URCU_TLS(rcu_reader).registered);
+    URCU_TLS(rcu_reader).registered = 1;
+    cds_list_add(&URCU_TLS(rcu_reader).node, &registry);
+    mutex_unlock(&rcu_registry_lock);
+    _rcu_thread_online();
 }
 
 void rcu_unregister_thread(void) {
-	_rcu_thread_offline();
-	assert(URCU_TLS(rcu_reader).registered);
-	URCU_TLS(rcu_reader).registered = 0;
-	mutex_lock(&rcu_registry_lock);
-	cds_list_del(&URCU_TLS(rcu_reader).node);
-	mutex_unlock(&rcu_registry_lock);
+    _rcu_thread_offline();
+    assert(URCU_TLS(rcu_reader).registered);
+    URCU_TLS(rcu_reader).registered = 0;
+    mutex_lock(&rcu_registry_lock);
+    cds_list_del(&URCU_TLS(rcu_reader).node);
+    mutex_unlock(&rcu_registry_lock);
 }
 ```
 
@@ -154,16 +154,163 @@ void rcu_unregister_thread(void) {
 
 ```c
 inline void rcu_read_lock(void) {
-	urcu_assert(URCU_TLS(rcu_reader).ctr);
+    urcu_assert(URCU_TLS(rcu_reader).ctr);
 }
 
 inline void rcu_read_unlock(void) {
-	urcu_assert(URCU_TLS(rcu_reader).ctr);
+    urcu_assert(URCU_TLS(rcu_reader).ctr);
 }
 ```
 
-可以看到在这两个函数里面实际上什么都没有做，只是assert，说明在O2优化下这就是个空的函数，也就是
+可以看到在这两个函数里面实际上什么都没有做，只是assert，说明在O2优化下这就是个空的函数。这也就是为什么urcu-qsbr是zero overhead的原因，因为他的读临界区完全啥事没干！
 
+## Quiescent State
+
+而在qsbr里面对于读线程最核心的函数实际上是`rcu_quiescent_state()`，用来告诉写线程，该读线程已经结束了一批读临界区：
+
+```c
+void rcu_quiescent_state(void) {
+    unsigned long gp_ctr;
+
+    urcu_assert(URCU_TLS(rcu_reader).registered);
+    if ((gp_ctr = CMM_LOAD_SHARED(rcu_gp.ctr)) == URCU_TLS(rcu_reader).ctr)
+        return;
+    _rcu_quiescent_state_update_and_wakeup(gp_ctr);
+}
+```
+
+这个函数首先看看当前线程的gp号是否已经是最新的，如果是，直接返回；否则调用`_rcu_quiescent_state_update_and_wakeup`：
+
+```c
+void _rcu_quiescent_state_update_and_wakeup(unsigned long gp_ctr) {
+    cmm_smp_mb();
+    _CMM_STORE_SHARED(URCU_TLS(rcu_reader).ctr, gp_ctr);
+    cmm_smp_mb();  /* write URCU_TLS(rcu_reader).ctr before read futex */
+    wake_up_gp();  /* similar to pthread_cond_broadcast */
+    cmm_smp_mb();
+}
+```
+
+`wakeup`函数实际上就是把刚刚读出来的最新的gp号存到当前线程的gp缓存里，接着唤醒可能在等待的写线程。这里的三个`cmm_smp_mb`调用就是memory barrier，防止这个函数之前和之后的操作可能产生的乱序，以及函数中的两步操作之间可能的乱序。
+
+可以从上面看出，核心函数的操作都不复杂，基本都是一些变量的load和store，overhead非常小。
+
+# 写线程函数——synchronize_rcu
+
+对于写线程，最核心的函数就是`synchronize_rcu`，等待Grace Period的结束：
+
+```c
+void synchronize_rcu(void)
+{
+    CDS_LIST_HEAD(qsreaders);
+
+    cmm_smp_mb();
+
+    mutex_lock(&rcu_gp_lock);
+    mutex_lock(&rcu_registry_lock);
+
+    if (cds_list_empty(&registry))
+        goto out;
+
+    CMM_STORE_SHARED(rcu_gp.ctr, rcu_gp.ctr + RCU_GP_CTR);
+
+    cmm_barrier();
+    cmm_smp_mb();
+
+    wait_for_readers(&registry, NULL, &qsreaders);
+    cds_list_splice(&qsreaders, &registry);
+out:
+    mutex_unlock(&rcu_registry_lock);
+    mutex_unlock(&rcu_gp_lock);
+    cmm_smp_mb();
+}
+```
+
+函数里面的`cmm_smp_mb`的作用就是为了确保`synchronize_rcu`之前和之后的读写操作都不会乱序。
+然后在函数里面分别对全局`rcu_gp`和`registry`进行了加锁，接着看看`registry`是否为空，如果空则表示没有读线程，可以直接返回。
+
+如果不为空，则把`rcu_gp`增一。增一的作用就是表示一个新的Grace Period已经开始了。
+接着调用`wait_for_readers`，等待Grace Period的结束。
+
+下面我们来看看`wait_for_readers`的实现：
+
+```c
+static void wait_for_readers(struct cds_list_head *input_readers,
+            struct cds_list_head *cur_snap_readers,
+            struct cds_list_head *qsreaders)
+{
+	unsigned int wait_loops = 0;
+	struct rcu_reader *index, *tmp;
+
+	/*
+	 * Wait for each thread URCU_TLS(rcu_reader).ctr to either
+	 * indicate quiescence (offline), or for them to observe the
+	 * current rcu_gp.ctr value.
+	 */
+	for (;;) {
+		if (wait_loops < RCU_QS_ACTIVE_ATTEMPTS)
+			wait_loops++;
+		if (wait_loops >= RCU_QS_ACTIVE_ATTEMPTS) {
+			uatomic_set(&rcu_gp.futex, -1);
+			/*
+			 * Write futex before write waiting (the other side
+			 * reads them in the opposite order).
+			 */
+			cmm_smp_wmb();
+			cds_list_for_each_entry(index, input_readers, node) {
+				_CMM_STORE_SHARED(index->waiting, 1);
+			}
+			/* Write futex before read reader_gp */
+			cmm_smp_mb();
+		}
+		cds_list_for_each_entry_safe(index, tmp, input_readers, node) {
+			switch (rcu_reader_state(&index->ctr)) {
+			case RCU_READER_ACTIVE_CURRENT:
+				if (cur_snap_readers) {
+					cds_list_move(&index->node,
+						cur_snap_readers);
+					break;
+				}
+				/* Fall-through */
+			case RCU_READER_INACTIVE:
+				cds_list_move(&index->node, qsreaders);
+				break;
+			case RCU_READER_ACTIVE_OLD:
+				/*
+				 * Old snapshot. Leaving node in
+				 * input_readers will make us busy-loop
+				 * until the snapshot becomes current or
+				 * the reader becomes inactive.
+				 */
+				break;
+			}
+		}
+
+		if (cds_list_empty(input_readers)) {
+			if (wait_loops >= RCU_QS_ACTIVE_ATTEMPTS) {
+				/* Read reader_gp before write futex */
+				cmm_smp_mb();
+				uatomic_set(&rcu_gp.futex, 0);
+			}
+			break;
+		} else {
+			/* Temporarily unlock the registry lock. */
+			mutex_unlock(&rcu_registry_lock);
+			if (wait_loops >= RCU_QS_ACTIVE_ATTEMPTS) {
+				wait_gp();
+			} else {
+#ifndef HAS_INCOHERENT_CACHES
+				caa_cpu_relax();
+#else /* #ifndef HAS_INCOHERENT_CACHES */
+				cmm_smp_mb();
+#endif /* #else #ifndef HAS_INCOHERENT_CACHES */
+			}
+			/* Re-lock the registry lock before the next loop. */
+			mutex_lock(&rcu_registry_lock);
+		}
+	}
+}
+```
 
 
 
