@@ -22,7 +22,7 @@ tags: [c, cpp, linux kernel]
 
 kfifo主要定义在`include/linux/kfifo.h`里面：
 
-``` c
+``` c?line_numbers=true
 struct kfifo {
   unsigned char *buffer;	/* the buffer holding the data */
   unsigned int size;  /* the size of the allocated buffer */
