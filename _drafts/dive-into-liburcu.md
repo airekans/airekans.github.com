@@ -232,85 +232,29 @@ out:
 如果不为空，则把`rcu_gp`增一。增一的作用就是表示一个新的Grace Period已经开始了。
 接着调用`wait_for_readers`，等待Grace Period的结束。
 
-下面我们来看看`wait_for_readers`的实现：
+下面我们来看看`wait_for_readers`的简化实现（实际实现要复杂很多，这里我们不关心具体的细节，只了解大概思路）：
 
 ```c
-static void wait_for_readers(struct cds_list_head *input_readers,
+static void wait_for_readers(
+            struct cds_list_head *input_readers,
             struct cds_list_head *cur_snap_readers,
             struct cds_list_head *qsreaders)
 {
-	unsigned int wait_loops = 0;
-	struct rcu_reader *index, *tmp;
-
-	/*
-	 * Wait for each thread URCU_TLS(rcu_reader).ctr to either
-	 * indicate quiescence (offline), or for them to observe the
-	 * current rcu_gp.ctr value.
-	 */
-	for (;;) {
-		if (wait_loops < RCU_QS_ACTIVE_ATTEMPTS)
-			wait_loops++;
-		if (wait_loops >= RCU_QS_ACTIVE_ATTEMPTS) {
-			uatomic_set(&rcu_gp.futex, -1);
-			/*
-			 * Write futex before write waiting (the other side
-			 * reads them in the opposite order).
-			 */
-			cmm_smp_wmb();
-			cds_list_for_each_entry(index, input_readers, node) {
-				_CMM_STORE_SHARED(index->waiting, 1);
-			}
-			/* Write futex before read reader_gp */
-			cmm_smp_mb();
-		}
-		cds_list_for_each_entry_safe(index, tmp, input_readers, node) {
-			switch (rcu_reader_state(&index->ctr)) {
-			case RCU_READER_ACTIVE_CURRENT:
-				if (cur_snap_readers) {
-					cds_list_move(&index->node,
-						cur_snap_readers);
-					break;
-				}
-				/* Fall-through */
-			case RCU_READER_INACTIVE:
-				cds_list_move(&index->node, qsreaders);
-				break;
-			case RCU_READER_ACTIVE_OLD:
-				/*
-				 * Old snapshot. Leaving node in
-				 * input_readers will make us busy-loop
-				 * until the snapshot becomes current or
-				 * the reader becomes inactive.
-				 */
-				break;
-			}
-		}
-
-		if (cds_list_empty(input_readers)) {
-			if (wait_loops >= RCU_QS_ACTIVE_ATTEMPTS) {
-				/* Read reader_gp before write futex */
-				cmm_smp_mb();
-				uatomic_set(&rcu_gp.futex, 0);
-			}
-			break;
-		} else {
-			/* Temporarily unlock the registry lock. */
-			mutex_unlock(&rcu_registry_lock);
-			if (wait_loops >= RCU_QS_ACTIVE_ATTEMPTS) {
-				wait_gp();
-			} else {
-#ifndef HAS_INCOHERENT_CACHES
-				caa_cpu_relax();
-#else /* #ifndef HAS_INCOHERENT_CACHES */
-				cmm_smp_mb();
-#endif /* #else #ifndef HAS_INCOHERENT_CACHES */
-			}
-			/* Re-lock the registry lock before the next loop. */
-			mutex_lock(&rcu_registry_lock);
-		}
-	}
+    struct rcu_reader *index, *tmp;
+    cds_list_for_each_entry_safe(
+        index, tmp, input_readers, node) {
+        while (index->ctr < CMM_LOAD_SHARED(rcu_gp.ctr)) {
+            usleep(100);
+        }
+    }
 }
 ```
+
+函数的目的就是等待所有的读线程都更新自己的gp号到最新的gp号。
+
+在`synchronize_rcu`返回之后，我们可以知道没有任何一个读线程可以获取到旧的共享数据，所以我们可以删除旧数据。
+
+
 
 
 
