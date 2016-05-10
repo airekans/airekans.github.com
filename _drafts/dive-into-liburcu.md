@@ -311,7 +311,7 @@ void WriteThreadFunc()
 
 下面是在一台16核(hyper-threading 32核)机器上面的benchmark结果：
 
-![]
+![URCU性能](https://cloud.githubusercontent.com/assets/1321283/15135954/07bc6ef2-16af-11e6-9857-c48639224e94.png)
 
 其中：
 
