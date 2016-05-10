@@ -254,10 +254,77 @@ static void wait_for_readers(
 
 在`synchronize_rcu`返回之后，我们可以知道没有任何一个读线程可以获取到旧的共享数据，所以我们可以删除旧数据。
 
+以上就是一个qsbr的RCU实现最核心的代码。
 
+# 性能
 
+下面我们用一个最简单的代码例子来对urcu和mutex做一下benchmark(详细代码可以看这个[repo][4])。
 
+> 若干个读线程对一个共享数据不断的读取，而另外一个写线程也不断的更新数据。
 
+如果用urcu来实现上面的逻辑的话，大概是下面这样：
+
+```c
+void ReadThreadFunc()
+{
+    struct Foo* foo = NULL;
+    int sum = 0;
+    unsigned int i;
+    int j;
+    rcu_register_thread();
+    for (i = 0; i < LOOP_TIMES; ++i) {
+        for (j = 0; j < 1000; ++j) {
+            rcu_read_lock();
+            foo = rcu_dereference(gs_foo);
+            if (foo) {
+                sum += foo->a + foo->b + foo->c + foo->d;
+            }
+            rcu_read_unlock();
+        }
+        rcu_quiescent_state();
+    }
+    rcu_unregister_thread();
+    pthread_mutex_lock(&gs_sum_guard);
+    gs_sum += sum;
+    pthread_mutex_unlock(&gs_sum_guard);
+}
+
+void WriteThreadFunc()
+{
+    int i;
+    while (!gs_is_end) {
+        for (i = 0; i < 1000; ++i) {
+            struct Foo* foo = (struct Foo*) malloc(sizeof(struct Foo));
+            foo->a = 2;
+            foo->b = 3;
+            foo->c = 4;
+            foo->d = 5;
+            rcu_xchg_pointer(&gs_foo, foo);
+            synchronize_rcu();
+            if (foo) {
+                free(foo);
+            }
+        }
+    }
+}
+```
+
+下面是在一台16核(hyper-threading 32核)机器上面的benchmark结果：
+
+![]
+
+其中：
+
+ 1. urcu_read_only是只有读线程，没有写线程的测试。相当于无锁的版本，也是性能最好的。
+ 2. urcu_qsbr_test是用urcu-qsbr的实现
+ 3. urcu_signal_test是用urcu-signal的实现
+ 4. urcu_generic_test是用urcu-mb的实现
+ 5. single_mutex_test是用一个mutex来保护共享数据的实现，也是我们最熟悉的实现。
+ 6. mutex_per_thread_test是每一个读线程都独占一个mutex，写线程需要获取所有读线程的mutex来进入临界区。
+
+可以看到，qsbr的性能最接近于read_only，其次是signal，都要比mutex版本好至少4倍，并且时间并不随读线程数目的增加而增加。这说明urcu随着核的增多，能够scale上去。
+ 
   [1]: http://liburcu.org/
   [2]: http://lttng.org/
   [3]: http://airekans.github.io/c/2016/04/23/rcu-intro#grace-period
+  [4]: https://github.com/airekans/urcu-benchmark
