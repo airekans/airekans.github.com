@@ -1,8 +1,13 @@
-# liburcu，一个用户态的RCU实现
+---
+layout: post
+title: "liburcu，一个用户态的RCU实现"
+description: "liburcu是一个高性能的用户态RCU实现。本文会先从一个例子入手，详细剖析urcu-qsbr的实现细节。"
+category: c
+tags: [c, cpp, linux kernel, lockfree, rcu]
+---
+{% include JB/setup %}
 
-----
-
-在上一篇RCU的介绍里面，我们基本了解了RCU是如何实现Reader无锁的。
+在上一篇[RCU的介绍][5]里面，我们基本了解了RCU是如何实现Reader无锁的。
 而由于RCU最开始是从Linux kernel里面实现的，kernel里面的实现非常依赖于整个内核的运行机制（比如Scheduler，软中断等），所以要把它port出来在用户态使用的话，难度并不小。
 所幸目前已经有个开源的Userspace RCU实现——[liburcu][1]，不单只实现了RCU算法，而且有几种实现方案，从侵入式的到非侵入式的。而且这个库已经在比较多的项目中用到，比如比较出名的[LTTng][2]。
 
@@ -328,3 +333,4 @@ void WriteThreadFunc()
   [2]: http://lttng.org/
   [3]: http://airekans.github.io/c/2016/04/23/rcu-intro#grace-period
   [4]: https://github.com/airekans/urcu-benchmark
+  [5]: http://airekans.github.io/c/2016/04/23/rcu-intro
