@@ -72,7 +72,7 @@ void WriteThreadFunc() {
    1. 线程开始的时候需要调用`rcu_register_thread()`进行注册，线程结束的时候需要调用`rcu_unregister_thread()`进行注销。
    2. 对于共享数据区的访问需要用`rcu_read_lock()`和`rcu_read_unlock()`来表示临界区。
    3. 对于共享数据的指针，需要用`rcu_dereference()`来获取。
-   4. 线程时不时需要调用`rcu_quiescent_state()`来生命线程在quiescent state。
+   4. 线程时不时需要调用`rcu_quiescent_state()`来声明线程在quiescent state。
  - 对于写者
    1. 新的数据初始化需要在替换指针之前就完成。
    2. 指针替换需要调用`rcu_xchg_pointer()`来完成。
