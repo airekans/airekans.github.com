@@ -34,8 +34,27 @@
 
 # 二段提交
 
+为了解决在replicate的时候其中某台机器挂掉，导致写操作可能导致的数据不一致，我们可以用[二段提交][3]。
 
+二段提交的思路是，由于写操作要同时作用到所有机器上，而如果在写操作发出后，其中某些机器down了，导致写操作失败，就出现了不一致，那么我们就分两步来进行写操作：
+
+ 1. Ready请求，发到所有的机器上，如果该机器都能够接受该写请求，则返回成功；否则就返回失败。
+ 2. 如果Ready阶段所有机器都回复成功，则再把接下来的写请求发到所有机器；否则，终止该写请求。
+
+关于二段提交协议的详细过程，可以看[这里的图示][4]。
+
+初看上去二段提交似乎能够解决上面说到的机器down掉出现的数据不一致问题，但是如果机器down掉是在返回ready成功之后呢？那我们就又回到了没有二段提交的黑暗时代了。
+
+所以二段提交实际上只是将数据不一致的问题稍微缓解，而并没有完全解决。那么二段提交的加强版——[三段提交][5]呢？情况其实也是差不多，三段提交也只是缓解问题，并没有完全解决？
+
+那难道分布式数据一致性就没有办法解决了吗？难道我们就没有银弹了吗？幸好，计算机科学家为我们想到了解决方案——Paxos/RAFT算法。
+
+
+ 
 
 
   [1]: http://zookeeper.apache.org/doc/trunk/recipes.html#sc_leaderElection
   [2]: https://cloud.githubusercontent.com/assets/1321283/19626203/bc58f98e-995e-11e6-95bb-40c395f48de8.png
+  [3]: https://en.wikipedia.org/wiki/Two-phase_commit_protocol
+  [4]: https://exploredatabase.blogspot.jp/2014/07/two-phase-commit-protocol-in-pictures.html
+  [5]: https://en.wikipedia.org/wiki/Three-phase_commit_protocol
