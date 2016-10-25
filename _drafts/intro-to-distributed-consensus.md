@@ -8,13 +8,19 @@
 
 在分布式系统中，一般我们会分成两类：逻辑服务和数据服务。逻辑服务指的是服务本身只处理一些业务相关的逻辑，本身并不存储数据，一般情况下业务数据都会从别的数据服务里面提取，然后处理完再存回数据服务。而数据服务是说服务本身最重要的任务就是存取数据，业务逻辑本身并不在这里实现。
 
-对于逻辑服务，由于其并不存储数据，所以我们可以认为它们是无状态的，也就是说只要数据一样，逻辑在具体那个机器上面跑其实并不十分重要(当然有一些例外)。所以对于逻辑服务，水分拓展的方式非常简单，就是直接的加机器。
+对于逻辑服务，由于其并不存储数据，所以我们可以认为它们是无状态的，也就是说只要数据一样，逻辑在具体那个机器上面跑其实并不十分重要(当然有一些例外)。所以对于逻辑服务，水分拓展的方式非常简单，就是直接的加机器。如下图所示：
+
+![logic server][1]
+
+如果其中一台down掉，就切换到别的机器上：
+
+![logic server switch][2]
 
 对于数据服务，想要简单的加机器并不可行。这里说的加机器，有两种方式，一种是sharding，另一种是replicate。Sharding是指通过把数据按某种方式拆分成几个区间，然后每个机器存储一个区间。Sharding方式相当于牺牲了其中某部分数据的availability(也就是当存储这个shard的机器down掉)，使得剩余数据能够做到HA，但实际上sharding并没办法做到真正的HA。
 
 而replicate就是说把所有数据都复制一份，并存储在另几台机器上，如果其中一台机器down了，就由另外机器顶上。但实际上，数据服务要做到真正意义上的replicate，并没有大家想象中那么简单。要用replicate，首先就要求所有replica之间都拥有相同的数据，否则数据就会出现不一致。那么如何在基本所有情况下都能保证数据一致性呢？这里就需要用到分布式一致性算法来保证了。
 
-这里说句题外话，对于某些系统来说，可能会有一个master，由master来负责协调系统内部的各种逻辑。这种系统说不上是很纯粹的数据服务，但是也不能同时由多个Master来做HA，因为这样会增加系统复杂度。在这种场景下要做到HA，就可以考虑用多个备master来做，同时只有一个master。由于并没有数据存储，所以master之间并不需要用一致性协议，只需要同一时间有一个master就可以了。这个听起来就用某种分布式锁来做就可以，而实际上可靠的分布式锁只需要用HA的一致数据服务就可以做到，比如[Zookeeper上面实现的锁][1]。
+这里说句题外话，对于某些系统来说，可能会有一个master，由master来负责协调系统内部的各种逻辑。这种系统说不上是很纯粹的数据服务，但是也不能同时由多个Master来做HA，因为这样会增加系统复杂度。在这种场景下要做到HA，就可以考虑用多个备master来做，同时只有一个master。由于并没有数据存储，所以master之间并不需要用一致性协议，只需要同一时间有一个master就可以了。这个听起来就用某种分布式锁来做就可以，而实际上可靠的分布式锁只需要用HA的一致数据服务就可以做到，比如[Zookeeper上面实现的锁][3]。
 
 下面我们会从简单的单机开始，谈谈如何做到数据的HA。
 
@@ -26,7 +32,7 @@
 
 这种思路在只读的情况下是可行的，可是如果要考虑写的情况，就会出问题。如果要保证数据一致性，我们必须保证每次写都能写到所有replica上面。（当然也有不写所有机器的方案，不过在这种情况会有冲突的出现，也就需要冲突解决的方案。）如下图所示：
 
-![write-multiple-replicas][2]
+![write-multiple-replicas][4]
 
 为了保证机器A和B上面的数据是一致的，我们需要保证客户端的写需要同时保证在A和B上面都成功。可是加入其中一台机器down掉，那么写就没有办法保证都成功，那么系统接下来到底能不能继续提供服务呢？很明显要保证数据一致，那么就不能提供服务。如果不能提供服务，那根本就做不到HA，那多加的机器就是没用的。
 
@@ -34,39 +40,52 @@
 
 # 二段提交
 
-为了解决在replicate的时候其中某台机器挂掉，导致写操作可能导致的数据不一致，我们可以用[二段提交][3]。
+为了解决在replicate的时候其中某台机器挂掉，导致写操作可能导致的数据不一致，我们可以用[二段提交][5]。
 
 二段提交的思路是，由于写操作要同时作用到所有机器上，而如果在写操作发出后，其中某些机器down了，导致写操作失败，就出现了不一致，那么我们就分两步来进行写操作：
 
  1. Ready请求，发到所有的机器上，如果该机器都能够接受该写请求，则返回成功；否则就返回失败。
  2. 如果Ready阶段所有机器都回复成功，则再把接下来的写请求发到所有机器；否则，终止该写请求。
 
-关于二段提交协议的详细过程，可以看[这里的图示][4]。
+关于二段提交协议的详细过程，可以看[这里的图示][6]。
 
 初看上去二段提交似乎能够解决上面说到的机器down掉出现的数据不一致问题，但是如果机器down掉是在返回ready成功之后呢？那我们就又回到了没有二段提交的黑暗时代了。
 
-所以二段提交实际上只是将数据不一致的问题稍微缓解，而并没有完全解决。那么二段提交的加强版——[三段提交][5]呢？情况其实也是差不多，三段提交也只是缓解问题，并没有完全解决.
+所以二段提交实际上只是将数据不一致的问题稍微缓解，而并没有完全解决。那么二段提交的加强版——[三段提交][7]呢？情况其实也是差不多，三段提交也只是缓解问题，并没有完全解决.
 
 那难道分布式数据一致性就没有办法解决了吗？难道我们就没有银弹了吗？幸好，计算机科学家为我们想到了解决方案——Paxos和RAFT这两个分布式一致性算法。
 
 # 分布式一致性算法
 
-分布式一致性算法就是为了解决在多机提供数据服务的时候能够保证一致性的同时也在一定程度上提供HA的算法。目前在业界应用的最为广泛的两个一致性算法分别是[Paxos][6]和[RAFT][7]。这里并不会详细介绍这两个算法的内容，只会大概的介绍一下这两个算法的核心思想。
+分布式一致性算法就是为了解决在多机提供数据服务的时候能够保证一致性的同时也在一定程度上提供HA的算法。目前在业界应用的最为广泛的两个一致性算法分别是[Paxos][8]和[RAFT][9]。这里并不会详细介绍这两个算法的内容，只会大概的介绍一下这两个算法的核心思想。
 
 在Paxos和RAFT里面，有一个核心概念，就叫quorum（也可以称之为majority，也就是大多数）。如果一个系统里面有N台机器的话，那么其中N/2 + 1台机器就组成了quorum。一般实践中N会是奇数，比如5，所以在这种系统里面quorum就是3。Paxos和RAFT都保证了只要集群中还有大于等于quorum数量的机器存在，并且这些机器之间不存在partition（也就是相互之间网络是连通的），那么系统就仍然能够继续提供服务。也就是说如果N为5，那么系统能够容忍2台以内的机器down掉。
 
-如果想要直观感受一下quorum是如何工作的，可以去[这里][8]看一下动画演示，其中演示了RAFT算法的主要流程。
+如果想要直观感受一下quorum是如何工作的，可以去[这里][11]看一下动画演示，其中演示了RAFT算法的主要流程。
 
+Paxos由计算机科学家Leslie Lamport提出，是最早提出的分布式一致性算法。Paxos算法本身只是对如何对一个值在系统中达成一致性进行描述，如果需要真正应用于真实系统，需要利用Multi-Paxos。而目前比较成熟的Multi-Paxos实现比较少，可能由微信开源的[PhxPaxos][10]，据说已经用在了微信的生产环境上。
+
+RAFT则是由Stanford的教授在2013年提出，目标就是能够提供分布式一致性的前提下，提高算法的可读性，使得实现难度下降。相对于Paxos，目前业界用RAFT的系统慢慢在增加，其中的原因主要是RAFT实现难度比Multi-Paxos要低。
+
+目前业界用到比较多的提供分布式一致性的系统有：
+
+ 1. [Zookeeper][12]：Java实现，Yahoo借鉴Google的Chubby思路实现的一致性KV系统。实际上并不是用的Paxos，而是用的一个类似的Zab协议，并没有从算法上证明分布式一致性，但是久经考验，直接使用并没有大问题。
+ 2. [etcd][13]：Go实现，CoreOS开源的利用RAFT协议的一致性KV系统，已经用在许多由Go实现的分布式系统中，最出名的有Kubernetes。
 
 
  
 
 
-  [1]: http://zookeeper.apache.org/doc/trunk/recipes.html#sc_leaderElection
-  [2]: https://cloud.githubusercontent.com/assets/1321283/19626203/bc58f98e-995e-11e6-95bb-40c395f48de8.png
-  [3]: https://en.wikipedia.org/wiki/Two-phase_commit_protocol
-  [4]: https://exploredatabase.blogspot.jp/2014/07/two-phase-commit-protocol-in-pictures.html
-  [5]: https://en.wikipedia.org/wiki/Three-phase_commit_protocol
-  [6]: https://en.wikipedia.org/wiki/Paxos_%28computer_science%29
-  [7]: https://raft.github.io/
-  [8]: https://raft.github.io/
+  [1]: https://cloud.githubusercontent.com/assets/1321283/19673122/851d117e-9aaf-11e6-897e-5e0ceb198ba9.png
+  [2]: https://cloud.githubusercontent.com/assets/1321283/19673159/e6b0f478-9aaf-11e6-86eb-e0d3aa6e1b99.png
+  [3]: http://zookeeper.apache.org/doc/trunk/recipes.html#sc_leaderElection
+  [4]: https://cloud.githubusercontent.com/assets/1321283/19626203/bc58f98e-995e-11e6-95bb-40c395f48de8.png
+  [5]: https://en.wikipedia.org/wiki/Two-phase_commit_protocol
+  [6]: https://exploredatabase.blogspot.jp/2014/07/two-phase-commit-protocol-in-pictures.html
+  [7]: https://en.wikipedia.org/wiki/Three-phase_commit_protocol
+  [8]: https://en.wikipedia.org/wiki/Paxos_%28computer_science%29
+  [9]: https://raft.github.io/
+  [10]: https://github.com/tencent-wechat/phxpaxos
+  [11]: https://raft.github.io/
+  [12]: https://zookeeper.apache.org/
+  [13]: https://coreos.com/etcd/
