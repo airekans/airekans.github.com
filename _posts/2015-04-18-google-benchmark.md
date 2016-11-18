@@ -38,7 +38,7 @@ int main()
 正好最近看见Google开源的[benchmark C++库](https://github.com/google/benchmark)，且自己也在写`HashMap`，所以也就实践了用benchmark库来进行benchmark，
 发现它有下面几个不错的feature：
 
-1. 简单易容，如果用过gtest的人，写起来会非常熟悉。
+1. 简单易用，如果用过gtest的人，写起来会非常熟悉。
 2. 对于不同的data size进行benchmark支持很好，可以很简单的用同一个代码段跑不同的data size。
 3. 输出的benchmark结果直接就是真实时间和CPU时间，且很方便的导入excel进行数据分析。
 4. 支持多线程benchmark(这个我还没用到)。
