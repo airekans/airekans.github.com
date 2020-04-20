@@ -7,7 +7,7 @@ tags: [distributed system, consensus]
 ---
 {% include JB/setup %}
 
-之前一段时间仔细学习了一些分布式一致性算法(Distributed Consensus Algorithm)，并尝试实现了一下，所以打算在这篇文章简略的介绍一下分布式算法要解决的问题、使用场景(以及不需要用的场景)、基本原理以及目前用的比较多的一些算法。
+之前一段时间仔细学习了一些分布式一致性算法（Distributed Consensus Algorithm），并尝试实现了一下，所以打算在这篇文章简略的介绍一下分布式算法要解决的问题、使用场景(以及不需要用的场景)、基本原理以及目前用的比较多的一些算法。
 
 # 为什么要使用分布式一致性算法
 
